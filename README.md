@@ -1,8 +1,7 @@
-# MLH Fellowship LLM Project
+# Orientation Project - Open Source Fellowship
 
 A barebones full-stack LLM chat application, built as a starting point for
-MLH fellows to extend. It intentionally does very little out of the box --
-see [`ISSUES.md`](./ISSUES.md) for the 30 issues that build it out.
+MLH fellows to extend.
 
 ## Stack
 
@@ -61,16 +60,6 @@ Then visit `http://localhost:5173`.
 ./scripts/dev.sh
 ```
 
-## What's here vs. what's not
-
-This scaffold gives you: a working conversation + message data model, one
-endpoint to send a message and get an LLM reply, and a minimal React UI
-that can hold a single conversation. It deliberately has **no**
-authentication, streaming, pagination, multi-conversation UI, migrations,
-or Docker setup -- those are the fellowship issues.
-
-## Contributing
-
-Pick an issue from `ISSUES.md`, open a branch, and submit a PR. Issues
-are labeled by area (`backend`, `frontend`, `database`, `llm`, `infra`)
-and difficulty (`good first issue`, `intermediate`, `advanced`).
+## What's the point?
+We want you to learn how to work on Open Source Projects, create PRs and tackling issues. 
+Your Pod Leader will be the maintainer of this project, closing PRs and managing the repository.
