@@ -14,9 +14,9 @@ class Settings(BaseSettings):
 
     # LLM provider config. Fellows will extend this to support
     # multiple providers behind the abstract interface in app/llm/.
-    llm_provider: str = "anthropic"
-    anthropic_api_key: str = ""
-    anthropic_model: str = "claude-sonnet-4-6"
+    llm_provider: str = "gemini"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
 
     # CORS - the Vite dev server default port
     frontend_origin: str = "http://localhost:5173"
