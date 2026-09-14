@@ -5,8 +5,7 @@ MLH fellows to extend.
 
 ## Stack
 
-- **Backend:** Python, FastAPI, SQLAlchemy, SQLite. Talks to an LLM
-  (Anthropic by default) through a small pluggable provider interface.
+- **Backend:** Python, FastAPI, SQLAlchemy, SQLite. Talks to an LLM through a small pluggable provider interface.
 - **Frontend:** JavaScript, React, Vite (Node-based tooling).
 - **Communication:** Frontend calls the backend REST API (Vite dev
   server proxies `/api` to `http://localhost:8000`).
