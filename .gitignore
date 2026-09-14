@@ -1,0 +1,34 @@
+# --- Secrets ---------------------------------------------------------------
+# backend/.env holds a live LLM API key. This repo is public.
+.env
+.env.*
+!.env.example
+
+# --- Python ----------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- SQLite ----------------------------------------------------------------
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# --- Node / Vite -----------------------------------------------------------
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+yarn-error.log*
+
+# --- Editors / OS ----------------------------------------------------------
+.DS_Store
+.vscode/
+.idea/
