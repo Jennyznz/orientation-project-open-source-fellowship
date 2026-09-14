@@ -10,6 +10,19 @@ MLH fellows to extend.
 - **Communication:** Frontend calls the backend REST API (Vite dev
   server proxies `/api` to `http://localhost:8000`).
 
+## Requirements
+
+- **Python 3.10 - 3.13.** 3.12 is recommended.
+  - **3.14 does not work.** `requirements.txt` pins `pydantic==2.9.2`, which
+    needs `pydantic-core==2.23.4`. That ships wheels for cp38-cp313 only, so
+    pip falls back to building it from source and the build fails:
+    `the configured Python interpreter version (3.14) is newer than PyO3's
+    maximum supported version (3.13)`.
+  - **Below 3.10 does not work.** `app/schemas.py` uses `str | None` (PEP 604)
+    and there is no `from __future__ import annotations`, so Pydantic
+    evaluates the annotation at runtime.
+- **Node 20+.** 18 also works. `vite@5` requires `^18.0.0 || >=20.0.0`.
+
 ## Project layout
 
 ```
@@ -37,7 +50,7 @@ scripts/dev.sh            # runs backend + frontend together
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
+python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # then add your Gemini_API_Key
 uvicorn app.main:app --reload --port 8000
