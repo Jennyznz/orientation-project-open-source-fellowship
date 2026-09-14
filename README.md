@@ -39,7 +39,7 @@ scripts/dev.sh            # runs backend + frontend together
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # then add your ANTHROPIC_API_KEY
+cp .env.example .env   # then add your Gemini_API_Key
 uvicorn app.main:app --reload --port 8000
 ```
 
