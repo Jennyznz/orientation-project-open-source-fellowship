@@ -33,3 +33,10 @@ class ConversationOut(BaseModel):
 
 class ConversationDetailOut(ConversationOut):
     messages: list[MessageOut] = []
+
+
+class ConversationListOut(BaseModel):
+    items: list[ConversationOut]
+    total: int
+    limit: int
+    offset: int

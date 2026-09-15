@@ -5,7 +5,7 @@ This is the minimum needed for the UI to create a conversation, send a
 message, and get an LLM reply back. Pagination, streaming, rename,
 delete, etc. are left as fellow issues -- see ISSUES.md.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -14,6 +14,7 @@ from app.models import Conversation, Message
 from app.schemas import (
     ConversationCreate,
     ConversationDetailOut,
+    ConversationListOut,
     ConversationOut,
     MessageCreate,
     MessageOut,
@@ -31,9 +32,16 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
     return convo
 
 
-@router.get("", response_model=list[ConversationOut])
-def list_conversations(db: Session = Depends(get_db)):
-    return db.query(Conversation).order_by(Conversation.created_at.desc()).all()
+@router.get("", response_model=ConversationListOut)
+def list_conversations(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Conversation).order_by(Conversation.created_at.desc())
+    total = query.count()
+    items = query.offset(offset).limit(limit).all()
+    return ConversationListOut(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.get("/{conversation_id}", response_model=ConversationDetailOut)
