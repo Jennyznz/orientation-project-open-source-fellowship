@@ -1,14 +1,8 @@
 from fastapi.testclient import TestClient
 
-from app.database import Base, engine
 from app.main import app
 
 client = TestClient(app)
-
-
-def setup_function():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
 
 
 def _create_conversation(title=None):

@@ -12,8 +12,12 @@ export async function createConversation(title) {
   return res.json();
 }
 
-export async function listConversations() {
-  const res = await fetch(`${BASE}/conversations`);
+export async function listConversations({ limit, offset } = {}) {
+  const params = new URLSearchParams();
+  if (limit !== undefined) params.set("limit", limit);
+  if (offset !== undefined) params.set("offset", offset);
+  const query = params.toString();
+  const res = await fetch(`${BASE}/conversations${query ? `?${query}` : ""}`);
   return res.json();
 }
 
