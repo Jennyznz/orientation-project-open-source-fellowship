@@ -84,6 +84,16 @@ def test_rename_conversation_rejects_too_long_title():
     assert response.status_code == 422
 
 
+def test_rename_conversation_accepts_title_that_only_exceeds_limit_with_padding():
+    convo = _create_conversation("Old title").json()
+
+    response = client.patch(
+        f"/api/conversations/{convo['id']}", json={"title": ("x" * 200) + "   "}
+    )
+    assert response.status_code == 200
+    assert response.json()["title"] == "x" * 200
+
+
 def test_rename_conversation_not_found():
     response = client.patch("/api/conversations/does-not-exist", json={"title": "New title"})
     assert response.status_code == 404

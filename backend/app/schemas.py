@@ -25,13 +25,17 @@ class ConversationCreate(BaseModel):
 class ConversationUpdate(BaseModel):
     title: str = Field(..., max_length=200)
 
+    @field_validator("title", mode="before")
+    @classmethod
+    def strip_title(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
     @field_validator("title")
     @classmethod
     def title_must_not_be_blank(cls, value: str) -> str:
-        stripped = value.strip()
-        if not stripped:
+        if not value:
             raise ValueError("title must not be empty")
-        return stripped
+        return value
 
 
 class ConversationOut(BaseModel):
