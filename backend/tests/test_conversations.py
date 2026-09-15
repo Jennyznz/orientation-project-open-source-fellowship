@@ -42,3 +42,48 @@ def test_list_conversations_rejects_invalid_limit():
 
     response = client.get("/api/conversations", params={"limit": 101})
     assert response.status_code == 422
+
+
+def test_rename_conversation():
+    convo = _create_conversation("Old title").json()
+
+    response = client.patch(f"/api/conversations/{convo['id']}", json={"title": "New title"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == convo["id"]
+    assert body["title"] == "New title"
+
+    fetched = client.get(f"/api/conversations/{convo['id']}")
+    assert fetched.json()["title"] == "New title"
+
+
+def test_rename_conversation_strips_whitespace():
+    convo = _create_conversation("Old title").json()
+
+    response = client.patch(f"/api/conversations/{convo['id']}", json={"title": "  Trimmed  "})
+    assert response.status_code == 200
+    assert response.json()["title"] == "Trimmed"
+
+
+def test_rename_conversation_rejects_empty_title():
+    convo = _create_conversation("Old title").json()
+
+    response = client.patch(f"/api/conversations/{convo['id']}", json={"title": ""})
+    assert response.status_code == 422
+
+    response = client.patch(f"/api/conversations/{convo['id']}", json={"title": "   "})
+    assert response.status_code == 422
+
+
+def test_rename_conversation_rejects_too_long_title():
+    convo = _create_conversation("Old title").json()
+
+    response = client.patch(
+        f"/api/conversations/{convo['id']}", json={"title": "x" * 201}
+    )
+    assert response.status_code == 422
+
+
+def test_rename_conversation_not_found():
+    response = client.patch("/api/conversations/does-not-exist", json={"title": "New title"})
+    assert response.status_code == 404
