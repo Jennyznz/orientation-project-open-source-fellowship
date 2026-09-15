@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
-from app.database import SessionLocal
 from app.main import app
 from app.models import Message
+from conftest import TestingSessionLocal
 
 client = TestClient(app)
 
@@ -115,7 +115,7 @@ def test_delete_conversation():
 def test_delete_conversation_cascades_messages():
     convo = _create_conversation("With messages").json()
 
-    db = SessionLocal()
+    db = TestingSessionLocal()
     try:
         db.add(Message(conversation_id=convo["id"], role="user", content="hello"))
         db.commit()
@@ -126,7 +126,7 @@ def test_delete_conversation_cascades_messages():
     response = client.delete(f"/api/conversations/{convo['id']}")
     assert response.status_code == 204
 
-    db = SessionLocal()
+    db = TestingSessionLocal()
     try:
         assert db.query(Message).filter_by(conversation_id=convo["id"]).count() == 0
     finally:
