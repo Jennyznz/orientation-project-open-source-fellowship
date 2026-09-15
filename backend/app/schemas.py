@@ -1,7 +1,7 @@
 """Pydantic request/response schemas."""
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 
 class MessageCreate(BaseModel):
@@ -20,6 +20,22 @@ class MessageOut(BaseModel):
 
 class ConversationCreate(BaseModel):
     title: str | None = None
+
+
+class ConversationUpdate(BaseModel):
+    title: str = Field(..., max_length=200)
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def strip_title(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("title")
+    @classmethod
+    def title_must_not_be_blank(cls, value: str) -> str:
+        if not value:
+            raise ValueError("title must not be empty")
+        return value
 
 
 class ConversationOut(BaseModel):

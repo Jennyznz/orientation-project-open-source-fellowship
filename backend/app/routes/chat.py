@@ -16,6 +16,7 @@ from app.schemas import (
     ConversationDetailOut,
     ConversationListOut,
     ConversationOut,
+    ConversationUpdate,
     MessageCreate,
     MessageOut,
 )
@@ -49,6 +50,20 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
     convo = db.get(Conversation, conversation_id)
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
+    return convo
+
+
+@router.patch("/{conversation_id}", response_model=ConversationOut)
+def rename_conversation(
+    conversation_id: str, payload: ConversationUpdate, db: Session = Depends(get_db)
+):
+    convo = db.get(Conversation, conversation_id)
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    convo.title = payload.title
+    db.commit()
+    db.refresh(convo)
     return convo
 
 
