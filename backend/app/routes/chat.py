@@ -23,10 +23,11 @@ from app.schemas import (
 )
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
+db_dependency = Depends(get_db)
 
 
 @router.post("", response_model=ConversationOut)
-def create_conversation(payload: ConversationCreate, db: Session = Depends(get_db)):
+def create_conversation(payload: ConversationCreate, db: Session = db_dependency):
     convo = Conversation(title=payload.title or "New Conversation")
     db.add(convo)
     db.commit()
@@ -38,7 +39,7 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
 def list_conversations(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db),
+    db: Session = db_dependency,
 ):
     query = db.query(Conversation).order_by(Conversation.created_at.desc())
     total = query.count()
@@ -47,7 +48,7 @@ def list_conversations(
 
 
 @router.get("/{conversation_id}", response_model=ConversationDetailOut)
-def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
+def get_conversation(conversation_id: str, db: Session = db_dependency):
     convo = db.get(Conversation, conversation_id)
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -56,7 +57,7 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
 
 @router.patch("/{conversation_id}", response_model=ConversationOut)
 def rename_conversation(
-    conversation_id: str, payload: ConversationUpdate, db: Session = Depends(get_db)
+    conversation_id: str, payload: ConversationUpdate, db: Session = db_dependency
 ):
     convo = db.get(Conversation, conversation_id)
     if not convo:
@@ -69,7 +70,7 @@ def rename_conversation(
 
 
 @router.delete("/{conversation_id}", status_code=204)
-def delete_conversation(conversation_id: str, db: Session = Depends(get_db)):
+def delete_conversation(conversation_id: str, db: Session = db_dependency):
     convo = db.get(Conversation, conversation_id)
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -80,7 +81,7 @@ def delete_conversation(conversation_id: str, db: Session = Depends(get_db)):
 
 @router.post("/{conversation_id}/messages", response_model=MessageOut)
 def send_message(
-    conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db)
+    conversation_id: str, payload: MessageCreate, db: Session = db_dependency
 ):
     convo = db.get(Conversation, conversation_id)
     if not convo:

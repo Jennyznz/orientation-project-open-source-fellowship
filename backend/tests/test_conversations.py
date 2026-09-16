@@ -1,7 +1,8 @@
-from app.main import app
-from app.models import Message
 from conftest import TestingSessionLocal
 from fastapi.testclient import TestClient
+
+from app.main import app
+from app.models import Message
 
 client = TestClient(app)
 
