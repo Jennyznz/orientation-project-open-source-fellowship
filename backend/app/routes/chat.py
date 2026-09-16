@@ -1,11 +1,3 @@
-"""
-Core conversation + messaging endpoints.
-
-This is the minimum needed for the UI to create a conversation, send a
-message, and get an LLM reply back. Pagination, streaming, rename,
-delete, etc. are left as fellow issues -- see ISSUES.md.
-"""
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -25,8 +17,15 @@ from app.schemas import (
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 db_dependency = Depends(get_db)
 
+CONVERSATION_NOT_FOUND = {404: {"description": "Conversation not found"}}
 
-@router.post("", response_model=ConversationOut)
+
+@router.post(
+    "",
+    response_model=ConversationOut,
+    summary="Create a conversation",
+    description="Creates a new, empty conversation. If no title is given, defaults to 'New Conversation'.",
+)
 def create_conversation(payload: ConversationCreate, db: Session = db_dependency):
     convo = Conversation(title=payload.title or "New Conversation")
     db.add(convo)
@@ -35,10 +34,17 @@ def create_conversation(payload: ConversationCreate, db: Session = db_dependency
     return convo
 
 
-@router.get("", response_model=ConversationListOut)
+@router.get(
+    "",
+    response_model=ConversationListOut,
+    summary="List conversations",
+    description="Returns conversations ordered newest-first, with limit/offset pagination and a total count.",
+)
 def list_conversations(
-    limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0),
+    limit: int = Query(
+        20, ge=1, le=100, description="Maximum number of conversations to return."
+    ),
+    offset: int = Query(0, ge=0, description="Number of conversations to skip."),
     db: Session = db_dependency,
 ):
     query = db.query(Conversation).order_by(Conversation.created_at.desc())
@@ -47,7 +53,13 @@ def list_conversations(
     return ConversationListOut(items=items, total=total, limit=limit, offset=offset)
 
 
-@router.get("/{conversation_id}", response_model=ConversationDetailOut)
+@router.get(
+    "/{conversation_id}",
+    response_model=ConversationDetailOut,
+    summary="Get a conversation",
+    description="Returns a single conversation along with its full message history.",
+    responses=CONVERSATION_NOT_FOUND,
+)
 def get_conversation(conversation_id: str, db: Session = db_dependency):
     convo = db.get(Conversation, conversation_id)
     if not convo:
@@ -55,7 +67,13 @@ def get_conversation(conversation_id: str, db: Session = db_dependency):
     return convo
 
 
-@router.patch("/{conversation_id}", response_model=ConversationOut)
+@router.patch(
+    "/{conversation_id}",
+    response_model=ConversationOut,
+    summary="Rename a conversation",
+    description="Updates a conversation's title. The title must be non-blank after stripping whitespace and at most 200 characters.",
+    responses=CONVERSATION_NOT_FOUND,
+)
 def rename_conversation(
     conversation_id: str, payload: ConversationUpdate, db: Session = db_dependency
 ):
@@ -69,7 +87,13 @@ def rename_conversation(
     return convo
 
 
-@router.delete("/{conversation_id}", status_code=204)
+@router.delete(
+    "/{conversation_id}",
+    status_code=204,
+    summary="Delete a conversation",
+    description="Deletes a conversation and all of its messages.",
+    responses=CONVERSATION_NOT_FOUND,
+)
 def delete_conversation(conversation_id: str, db: Session = db_dependency):
     convo = db.get(Conversation, conversation_id)
     if not convo:
@@ -79,7 +103,13 @@ def delete_conversation(conversation_id: str, db: Session = db_dependency):
     db.commit()
 
 
-@router.post("/{conversation_id}/messages", response_model=MessageOut)
+@router.post(
+    "/{conversation_id}/messages",
+    response_model=MessageOut,
+    summary="Send a message",
+    description="Adds a user message to the conversation, gets a reply from the configured LLM provider, and returns the assistant's message.",
+    responses=CONVERSATION_NOT_FOUND,
+)
 def send_message(
     conversation_id: str, payload: MessageCreate, db: Session = db_dependency
 ):

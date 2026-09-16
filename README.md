@@ -72,6 +72,12 @@ Then visit `http://localhost:5173`.
 ./scripts/dev.sh
 ```
 
+## API
+
+With the backend running, interactive API docs (Swagger UI) are at
+`http://localhost:8000/docs`, and the raw OpenAPI schema is at
+`http://localhost:8000/openapi.json`.
+
 ## Debugging GitHub Actions locally
 
 If you’re working on CI workflows, it can be very helpful to run them locally before pushing. A good tool for that is [`act`](https://github.com/nektos/act), which lets you execute GitHub Actions workflows on your machine.
