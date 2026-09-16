@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import Base, engine
+from app.errors import register_exception_handlers
 from app.middleware import RequestLoggingMiddleware
 from app.routes import chat, health
 
@@ -25,6 +26,7 @@ app = FastAPI(
     description="A barebones LLM chat API: conversations, messages, and a pluggable LLM provider.",
     version="0.1.0",
 )
+register_exception_handlers(app)
 
 # Register new logging middleware
 app.add_middleware(RequestLoggingMiddleware)
