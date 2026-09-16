@@ -18,10 +18,6 @@ export default function App() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    createNewConversation();
-  }, []);
-
   async function createNewConversation() {
     const newConversation = await createConversation("New Conversation");
     setConversationId(newConversation.id);
@@ -29,7 +25,8 @@ export default function App() {
   }
 
   async function handleSend(text) {
-    if (!conversationId) return;
+    if (!conversationId) await createNewConversation();
+
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setLoading(true);
     await sendMessage(conversationId, text);
@@ -50,13 +47,18 @@ export default function App() {
     setMessages(conversation.messages);
   }
 
+  async function handleNewConversation() {
+    await createNewConversation();
+  }
+
   return (
     <>
       <div className="app-container">
         <aside>
           <Sidebar
-            onNewConversation={createNewConversation}
+            onNewConversation={handleNewConversation}
             onSelectConversation={handleSelectConversation}
+            selectedConversationId={conversationId}
           />
         </aside>
         <main>

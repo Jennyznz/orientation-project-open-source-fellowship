@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { listConversations } from "../api/client.js";
 import ConversationHistoryItem from "./ConversationHistoryItem.jsx";
 
-export default function ConversationHistory({ onSelectConversation }) {
+export default function ConversationHistory({
+  onSelectConversation,
+  selectedConversationId,
+}) {
   const [conversations, setConversations] = useState([]);
 
   useEffect(() => {
@@ -26,6 +29,7 @@ export default function ConversationHistory({ onSelectConversation }) {
             id={id}
             title={title}
             onSelectConversation={onSelectConversation}
+            isSelected={id === selectedConversationId}
           />
         ))}
       </ul>

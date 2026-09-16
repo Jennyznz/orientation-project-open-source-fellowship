@@ -1,11 +1,18 @@
 import ConversationHistory from "./ConversationHistory";
 import NewConversationButton from "./NewConversationButton";
 
-export default function Sidebar({ onSelectConversation, onNewConversation }) {
+export default function Sidebar({
+  onSelectConversation,
+  onNewConversation,
+  selectedConversationId,
+}) {
   return (
     <div className="sidebar">
       <NewConversationButton onClick={onNewConversation} />
-      <ConversationHistory onSelectConversation={onSelectConversation} />
+      <ConversationHistory
+        onSelectConversation={onSelectConversation}
+        selectedConversationId={selectedConversationId}
+      />
     </div>
   );
 }
