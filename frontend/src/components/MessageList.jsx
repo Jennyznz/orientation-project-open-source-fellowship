@@ -10,7 +10,11 @@ export default function MessageList({ messages, loading }) {
           {m.content}
         </div>
       ))}
-      {loading && <p className="muted-text">Thinking...</p>}
+      {loading && (
+        <div className="message-item muted-text">
+          <strong>Assistant:</strong> <span className="thinking-text">Thinking...</span>
+        </div>
+      )}
     </div>
   );
 }

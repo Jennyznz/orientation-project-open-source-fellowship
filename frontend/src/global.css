@@ -8,6 +8,9 @@
   --color-button-fg: #ffffff;
   --color-selected-bg: #dddddd;
   --color-selected-outline: #333333;
+  --color-error-bg: #fdecea;
+  --color-error-fg: #b3261e;
+  --color-error-border: #f5c6c2;
 }
 
 :root[data-theme="dark"] {
@@ -20,6 +23,9 @@
   --color-button-fg: #16161a;
   --color-selected-bg: #2a2a2e;
   --color-selected-outline: #999999;
+  --color-error-bg: #3a1f1e;
+  --color-error-fg: #f5a19b;
+  --color-error-border: #5c2b28;
 }
 
 * {
