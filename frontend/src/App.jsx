@@ -74,8 +74,9 @@ export default function App() {
 
   return (
     <>
-      <div className="app-container">
+      <div id="app-container">
         <aside>
+          <h1>MLH LLM Fellowship Project</h1>
           <Sidebar
             conversations={conversations}
             onNewConversation={handleNewConversation}
@@ -84,7 +85,6 @@ export default function App() {
           />
         </aside>
         <main>
-          {/* <h1>MLH LLM Fellowship Project</h1> */}
           <MessageList messages={messages} loading={loading} />
           <MessageInput onSend={handleSend} disabled={loading} />
         </main>

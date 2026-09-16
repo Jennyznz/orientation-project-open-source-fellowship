@@ -6,11 +6,11 @@ export default function ConversationHistory({
   selectedConversationId,
 }) {
   return (
-    <div className="conversation-history">
-      <p>Conversation history</p>
+    <div id="conversation-history">
+      <p className="muted-text">Recents</p>
       <ul>
         {conversations.length === 0 && (
-          <p style={{ color: "#888" }}>No conversations yet.</p>
+          <p className="muted-text">No conversations yet.</p>
         )}
         {conversations.map(({ id, title }) => (
           <ConversationHistoryItem

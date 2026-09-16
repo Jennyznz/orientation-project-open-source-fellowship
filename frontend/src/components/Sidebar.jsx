@@ -8,7 +8,7 @@ export default function Sidebar({
   selectedConversationId,
 }) {
   return (
-    <div className="sidebar">
+    <div id="sidebar">
       <NewConversationButton onClick={onNewConversation} />
       <ConversationHistory
         conversations={conversations}
