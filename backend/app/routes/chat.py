@@ -9,6 +9,7 @@ delete, etc. are left as fellow issues -- see ISSUES.md.
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.llm import get_llm_provider
 from app.models import Conversation, Message
@@ -134,7 +135,7 @@ def send_message(
     history = [{"role": m.role, "content": m.content} for m in convo.messages]
 
     llm = get_llm_provider()
-    reply_text = llm.generate_reply(history)
+    reply_text = llm.generate_reply(history, settings.system_prompt)
 
     assistant_msg = Message(
         conversation_id=conversation_id, role="assistant", content=reply_text

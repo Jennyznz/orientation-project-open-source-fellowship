@@ -89,6 +89,23 @@ npm run dev
 
 Then visit `http://localhost:5173`.
 
+## Configuration
+
+### System prompt
+
+The system prompt is a set of instructions sent to the LLM with every
+request. It shapes the assistant's tone and behaviour. It applies to every
+conversation and is not stored in the database or shown in the chat.
+
+To change it, set `SYSTEM_PROMPT` in `backend/.env`:
+
+```bash
+SYSTEM_PROMPT=You are a concise assistant. Answer in two sentences or fewer.
+```
+
+If `SYSTEM_PROMPT` is not set, it defaults to `You are a helpful assistant.`
+(see `backend/app/config.py`). Restart the backend after changing it.
+
 ### Or run both at once
 
 ```bash

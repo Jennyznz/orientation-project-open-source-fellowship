@@ -15,7 +15,7 @@ class GeminiProvider(LLMProvider):
     def __init__(self) -> None:
         self.client = genai.Client(api_key=settings.gemini_api_key)
 
-    def generate_reply(self, history: list[dict]) -> str:
+    def generate_reply(self, history: list[dict], system_prompt: str) -> str:
         # Gemini uses "model" instead of "assistant" for the assistant role,
         # and expects content as a list of Part objects rather than a plain string.
         contents = [
@@ -29,5 +29,7 @@ class GeminiProvider(LLMProvider):
         response = self.client.models.generate_content(
             model=settings.gemini_model,
             contents=contents,
+            # Gemini takes the system prompt as config, not as an entry in contents.
+            config=types.GenerateContentConfig(system_instruction=system_prompt),
         )
         return response.text
