@@ -48,6 +48,8 @@ scripts/dev.sh            # runs backend + frontend together
 
 ### Backend
 
+macOS/Linux:
+
 ```bash
 cd backend
 python3.12 -m venv .venv && source .venv/bin/activate
@@ -55,6 +57,20 @@ pip install -r requirements.txt
 cp .env.example .env   # then add your Gemini_API_Key
 uvicorn app.main:app --reload --port 8000
 ```
+
+Windows (Git Bash), venv only creates a `Scripts/` directory, not `bin/`:
+
+```bash
+cd backend
+py -3.12 -m venv .venv && source .venv/Scripts/activate
+pip install -r requirements.txt
+cp .env.example .env   # then add your Gemini_API_Key
+uvicorn app.main:app --reload --port 8000
+```
+
+The server picks up `GEMINI_API_KEY` once at startup, and `--reload` only
+watches `.py` files, not `.env`. If you edit `.env` while the server is
+running, restart it to pick up the change.
 
 Optionally, seed a couple of sample conversations so the frontend has
 something to show without needing a live LLM key:
@@ -78,6 +94,18 @@ Then visit `http://localhost:5173`.
 ```bash
 ./scripts/dev.sh
 ```
+
+### Or use the Makefile
+
+```bash
+make backend-install
+make frontend-install
+make dev
+```
+
+`make backend-install` creates the backend venv, installs dependencies, and
+copies `.env.example` to `.env` if it doesn't already exist. Other targets:
+`make backend-run`, `make frontend-run`.
 
 ## API
 

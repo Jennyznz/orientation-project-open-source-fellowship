@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
-# Runs backend (FastAPI/uvicorn) and frontend (Vite) together for local dev.
-# Requires: backend venv set up + deps installed, frontend `npm install` run.
 set -e
 
 trap 'kill 0' EXIT
 
-(cd backend && uvicorn app.main:app --reload --port 8000) &
+if [ -x "backend/.venv/bin/uvicorn" ]; then
+  UVICORN="backend/.venv/bin/uvicorn"
+else
+  UVICORN="backend/.venv/Scripts/uvicorn"
+fi
+
+"$UVICORN" app.main:app --reload --reload-dir backend --port 8000 --app-dir backend &
 (cd frontend && npm run dev) &
 
 wait
