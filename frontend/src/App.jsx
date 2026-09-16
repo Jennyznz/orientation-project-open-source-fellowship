@@ -18,10 +18,19 @@ const initialState = {
   loading: false,
 };
 
+function getInitialTheme() {
+  if (typeof document !== "undefined") {
+    const attr = document.documentElement.getAttribute("data-theme");
+    if (attr === "light" || attr === "dark") return attr;
+  }
+  return "light";
+}
+
 // Barebones single-conversation UI. There's no streaming yet -- those are fellow issues (see ISSUES.md).
 export default function App() {
   const [conversationState, setConversationState] = useState(initialState);
   const [conversations, setConversations] = useState([]);
+  const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
     async function fetchConversations() {
@@ -30,6 +39,19 @@ export default function App() {
     }
     fetchConversations();
   }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try {
+      localStorage.setItem("theme", theme);
+    } catch (e) {
+      console.debug("Unable to persist theme preference", e);
+    }
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  }
 
   async function createNewConversation() {
     const newConversation = await createConversation("New Conversation");
@@ -91,7 +113,12 @@ export default function App() {
     <>
       <div id="app-container">
         <aside>
-          <h1>MLH LLM Fellowship Project</h1>
+          <div id="sidebar-header">
+            <h1>MLH LLM Fellowship Project</h1>
+            <button id="theme-toggle" onClick={toggleTheme}>
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+          </div>
           <Sidebar
             conversations={conversations}
             onNewConversation={handleNewConversation}
