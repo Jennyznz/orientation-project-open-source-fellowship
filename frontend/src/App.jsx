@@ -12,13 +12,17 @@ import Sidebar from "./components/Sidebar.jsx";
 
 import "./app.css";
 
+const initialState = {
+  conversationId: null,
+  messages: [],
+  loading: false,
+};
+
 // Barebones single-conversation UI. There's no sidebar, no conversation
 // switching, no streaming yet -- those are fellow issues (see ISSUES.md).
 export default function App() {
-  const [conversationId, setConversationId] = useState(null);
+  const [conversationState, setConversationState] = useState(initialState);
   const [conversations, setConversations] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchConversations() {
@@ -30,8 +34,10 @@ export default function App() {
 
   async function createNewConversation() {
     const newConversation = await createConversation("New Conversation");
-    setConversationId(newConversation.id);
-    setMessages([]);
+    setConversationState(() => ({
+      ...initialState,
+      conversationId: newConversation.id,
+    }));
     setConversations((prev) => [
       { id: newConversation.id, title: newConversation.title },
       ...prev,
@@ -40,19 +46,33 @@ export default function App() {
   }
 
   async function handleSend(text) {
-    let currentConversationId = conversationId;
+    let currentConversationId = conversationState.conversationId;
 
-    if (!conversationId) {
+    if (!conversationState.conversationId) {
       const newConversation = await createNewConversation();
       currentConversationId = newConversation.id;
     }
 
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
-    setLoading(true);
+    setConversationState((prev) => ({
+      ...prev,
+      messages: [...prev.messages, { role: "user", content: text }],
+      loading: true,
+    }));
+
     await sendMessage(currentConversationId, text);
+
     const full = await getConversation(currentConversationId);
-    setMessages(full.messages);
-    setLoading(false);
+    setConversationState((prev) => ({
+      ...prev,
+      messages: [
+        ...prev.messages,
+        {
+          role: "assistant",
+          content: full.messages[full.messages.length - 1].content,
+        },
+      ],
+      loading: false,
+    }));
   }
 
   async function handleSelectConversation(id) {
@@ -63,13 +83,15 @@ export default function App() {
       return;
     }
 
-    setConversationId(conversation.id);
-    setMessages(conversation.messages);
+    setConversationState(() => ({
+      ...initialState,
+      conversationId: conversation.id,
+      messages: conversation.messages,
+    }));
   }
 
   async function handleNewConversation() {
-    setConversationId(null);
-    setMessages([]);
+    setConversationState(initialState);
   }
 
   return (
@@ -81,12 +103,18 @@ export default function App() {
             conversations={conversations}
             onNewConversation={handleNewConversation}
             onSelectConversation={handleSelectConversation}
-            selectedConversationId={conversationId}
+            selectedConversationId={conversationState.conversationId}
           />
         </aside>
         <main>
-          <MessageList messages={messages} loading={loading} />
-          <MessageInput onSend={handleSend} disabled={loading} />
+          <MessageList
+            messages={conversationState.messages}
+            loading={conversationState.loading}
+          />
+          <MessageInput
+            onSend={handleSend}
+            disabled={conversationState.loading}
+          />
         </main>
       </div>
     </>
