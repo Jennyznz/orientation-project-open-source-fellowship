@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   createConversation,
   getConversation,
+  listConversations,
   sendMessage,
 } from "./api/client.js";
 import MessageInput from "./components/MessageInput.jsx";
@@ -15,22 +16,41 @@ import "./app.css";
 // switching, no streaming yet -- those are fellow issues (see ISSUES.md).
 export default function App() {
   const [conversationId, setConversationId] = useState(null);
+  const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchConversations() {
+      const data = await listConversations();
+      setConversations(data.items);
+    }
+    fetchConversations();
+  }, []);
 
   async function createNewConversation() {
     const newConversation = await createConversation("New Conversation");
     setConversationId(newConversation.id);
     setMessages([]);
+    setConversations((prev) => [
+      { id: newConversation.id, title: newConversation.title },
+      ...prev,
+    ]);
+    return newConversation;
   }
 
   async function handleSend(text) {
-    if (!conversationId) await createNewConversation();
+    let currentConversationId = conversationId;
+
+    if (!conversationId) {
+      const newConversation = await createNewConversation();
+      currentConversationId = newConversation.id;
+    }
 
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setLoading(true);
-    await sendMessage(conversationId, text);
-    const full = await getConversation(conversationId);
+    await sendMessage(currentConversationId, text);
+    const full = await getConversation(currentConversationId);
     setMessages(full.messages);
     setLoading(false);
   }
@@ -48,7 +68,8 @@ export default function App() {
   }
 
   async function handleNewConversation() {
-    await createNewConversation();
+    setConversationId(null);
+    setMessages([]);
   }
 
   return (
@@ -56,13 +77,14 @@ export default function App() {
       <div className="app-container">
         <aside>
           <Sidebar
+            conversations={conversations}
             onNewConversation={handleNewConversation}
             onSelectConversation={handleSelectConversation}
             selectedConversationId={conversationId}
           />
         </aside>
         <main>
-          <h1>MLH LLM Fellowship Project</h1>
+          {/* <h1>MLH LLM Fellowship Project</h1> */}
           <MessageList messages={messages} loading={loading} />
           <MessageInput onSend={handleSend} disabled={loading} />
         </main>

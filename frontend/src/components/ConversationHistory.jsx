@@ -1,21 +1,10 @@
-import { useEffect, useState } from "react";
-import { listConversations } from "../api/client.js";
 import ConversationHistoryItem from "./ConversationHistoryItem.jsx";
 
 export default function ConversationHistory({
+  conversations,
   onSelectConversation,
   selectedConversationId,
 }) {
-  const [conversations, setConversations] = useState([]);
-
-  useEffect(() => {
-    async function fetchConversations() {
-      const data = await listConversations();
-      setConversations(data.items);
-    }
-    fetchConversations();
-  }, []);
-
   return (
     <div className="conversation-history">
       <p>Conversation history</p>
