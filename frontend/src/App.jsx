@@ -9,6 +9,8 @@ import MessageInput from "./components/MessageInput.jsx";
 import MessageList from "./components/MessageList.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 
+import "./app.css";
+
 // Barebones single-conversation UI. There's no sidebar, no conversation
 // switching, no streaming yet -- those are fellow issues (see ISSUES.md).
 export default function App() {
@@ -20,6 +22,12 @@ export default function App() {
     createNewConversation();
   }, []);
 
+  async function createNewConversation() {
+    const newConversation = await createConversation("New Conversation");
+    setConversationId(newConversation.id);
+    setMessages([]);
+  }
+
   async function handleSend(text) {
     if (!conversationId) return;
     setMessages((prev) => [...prev, { role: "user", content: text }]);
@@ -30,13 +38,7 @@ export default function App() {
     setLoading(false);
   }
 
-  async function createNewConversation() {
-    const newConversation = await createConversation("New Conversation");
-    setConversationId(newConversation.id);
-    setMessages([]);
-  }
-
-  async function onSelectConversation(id) {
+  async function handleSelectConversation(id) {
     const conversation = await getConversation(id);
 
     if (conversation.detail) {
@@ -49,25 +51,20 @@ export default function App() {
   }
 
   return (
-    <div
-      style={{
-        maxWidth: 700,
-        margin: "0 auto",
-        padding: 24,
-        fontFamily: "sans-serif",
-      }}
-    >
-      <aside>
-        <Sidebar
-          onNewConversation={createNewConversation}
-          onSelectConversation={onSelectConversation}
-        />
-      </aside>
-      <main>
-        <h1>MLH LLM Fellowship Project</h1>
-        <MessageList messages={messages} loading={loading} />
-        <MessageInput onSend={handleSend} disabled={loading} />
-      </main>
-    </div>
+    <>
+      <div className="app-container">
+        <aside>
+          <Sidebar
+            onNewConversation={createNewConversation}
+            onSelectConversation={handleSelectConversation}
+          />
+        </aside>
+        <main>
+          <h1>MLH LLM Fellowship Project</h1>
+          <MessageList messages={messages} loading={loading} />
+          <MessageInput onSend={handleSend} disabled={loading} />
+        </main>
+      </div>
+    </>
   );
 }

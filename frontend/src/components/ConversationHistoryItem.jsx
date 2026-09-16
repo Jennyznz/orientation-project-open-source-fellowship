@@ -4,8 +4,10 @@ export default function ConversationHistoryItem({
   onSelectConversation,
 }) {
   return (
-    <div key={id} onClick={() => onSelectConversation(id)}>
-      {title}
-    </div>
+    <li key={id}>
+      <button type="button" onClick={() => onSelectConversation(id)}>
+        {title}
+      </button>
+    </li>
   );
 }

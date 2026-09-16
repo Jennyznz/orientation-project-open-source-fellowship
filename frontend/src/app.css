@@ -1,0 +1,56 @@
+#root {
+  height: 100%;
+}
+
+.app-container {
+  height: 100%;
+  display: flex;
+}
+
+aside {
+  border-right: 1px solid #ddd;
+  width: 250px;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+main {
+  flex: 1;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 12px 24px;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.conversation-history {
+  font-size: 14px;
+
+  & p {
+    margin-bottom: 8px;
+  }
+
+  & ul {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0;
+
+    list-style: none;
+  }
+
+  & li > button {
+    display: block;
+    width: 100%;
+    border: none;
+    padding: 8px;
+
+    background: aliceblue;
+    cursor: pointer;
+    text-align: left;
+  }
+}

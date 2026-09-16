@@ -8,24 +8,27 @@ export default function ConversationHistory({ onSelectConversation }) {
   useEffect(() => {
     async function fetchConversations() {
       const data = await listConversations();
-      setConversations(data);
+      setConversations(data.items);
     }
     fetchConversations();
   }, []);
 
   return (
-    <div>
-      {conversations.length === 0 && (
-        <p style={{ color: "#888" }}>No conversations yet.</p>
-      )}
-      {conversations.map(({ id, title }) => (
-        <ConversationHistoryItem
-          key={id}
-          id={id}
-          title={title}
-          onSelectConversation={onSelectConversation}
-        />
-      ))}
+    <div className="conversation-history">
+      <p>Conversation history</p>
+      <ul>
+        {conversations.length === 0 && (
+          <p style={{ color: "#888" }}>No conversations yet.</p>
+        )}
+        {conversations.map(({ id, title }) => (
+          <ConversationHistoryItem
+            key={id}
+            id={id}
+            title={title}
+            onSelectConversation={onSelectConversation}
+          />
+        ))}
+      </ul>
     </div>
   );
 }
