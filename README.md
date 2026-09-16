@@ -56,6 +56,13 @@ cp .env.example .env   # then add your Gemini_API_Key
 uvicorn app.main:app --reload --port 8000
 ```
 
+Optionally, seed a couple of sample conversations so the frontend has
+something to show without needing a live LLM key:
+
+```bash
+python scripts/seed.py
+```
+
 ### Frontend
 
 ```bash
