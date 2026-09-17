@@ -18,8 +18,7 @@ const initialState = {
   loading: false,
 };
 
-// Barebones single-conversation UI. There's no sidebar, no conversation
-// switching, no streaming yet -- those are fellow issues (see ISSUES.md).
+// Barebones single-conversation UI. There's no streaming yet -- those are fellow issues (see ISSUES.md).
 export default function App() {
   const [conversationState, setConversationState] = useState(initialState);
   const [conversations, setConversations] = useState([]);
