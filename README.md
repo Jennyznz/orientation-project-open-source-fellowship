@@ -21,7 +21,7 @@ maximum supported version (3.13)`.
   - **Below 3.10 does not work.** `app/schemas.py` uses `str | None` (PEP 604)
     and there is no `from __future__ import annotations`, so Pydantic
     evaluates the annotation at runtime.
-- **Node 20+.** 18 also works. `vite@5` requires `^18.0.0 || >=20.0.0`.
+- **Node 22+.** The current frontend toolchain requires a Node 22 runtime. Older 20.x versions may not satisfy newer package requirements.
 
 ## Project layout
 
