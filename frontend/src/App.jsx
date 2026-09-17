@@ -64,13 +64,7 @@ export default function App() {
     const full = await getConversation(currentConversationId);
     setConversationState((prev) => ({
       ...prev,
-      messages: [
-        ...prev.messages,
-        {
-          role: "assistant",
-          content: full.messages[full.messages.length - 1].content,
-        },
-      ],
+      messages: full.messages,
       loading: false,
     }));
   }
