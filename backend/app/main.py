@@ -5,6 +5,7 @@ Run with:
     uvicorn app.main:app --reload --port 8000
 """
 import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
