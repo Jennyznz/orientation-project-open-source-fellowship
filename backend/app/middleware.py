@@ -12,8 +12,9 @@ logger = logging.getLogger("app.request")
 # Connect app config to Python's numeric logging system
 log_level_int = getattr(
     logging, settings.log_level.upper(), logging.INFO
-    ) # defaults to INFO
+)  # defaults to INFO
 logger.setLevel(log_level_int)
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -23,7 +24,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         # Handle request
         response = await call_next(request)
 
-        # Calculate and log duration 
+        # Calculate and log duration
         duration = time.perf_counter() - start_time
 
         # Log relevant fields
