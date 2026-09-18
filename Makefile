@@ -1,3 +1,7 @@
+# Requires a POSIX shell (bash/sh) for `test`/`cp` in backend-install and
+# `dev`'s use of scripts/dev.sh. On Windows that means Git Bash or WSL --
+# these targets don't work under a plain cmd.exe or PowerShell `make`.
+
 ifeq ($(OS),Windows_NT)
     VENV_BIN_DIR := Scripts
     PYTHON := python

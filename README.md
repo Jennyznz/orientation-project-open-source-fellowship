@@ -107,6 +107,9 @@ make dev
 copies `.env.example` to `.env` if it doesn't already exist. Other targets:
 `make backend-run`, `make frontend-run`.
 
+The Makefile needs a POSIX shell (`test`, `cp`) and `make` itself, so on
+Windows run it from Git Bash or WSL, not plain `cmd.exe` or PowerShell.
+
 ## API
 
 With the backend running, interactive API docs (Swagger UI) are at
