@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite:///{(BASE_DIR / 'app.db').as_posix()}"
     log_level: str = "INFO"
 
-
     # LLM provider config. Fellows will extend this to support
     # multiple providers behind the abstract interface in app/llm/.
     llm_provider: str = "gemini"
