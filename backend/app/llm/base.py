@@ -11,9 +11,12 @@ from abc import ABC, abstractmethod
 
 class LLMProvider(ABC):
     @abstractmethod
-    def generate_reply(self, history: list[dict]) -> str:
+    def generate_reply(self, history: list[dict], system_prompt: str) -> str:
         """
         Given conversation history as a list of {"role": ..., "content": ...}
         dicts, return the assistant's full text reply.
+
+        `system_prompt` holds instructions that guide the model's behaviour.
+        It is sent alongside the history, not as a message within it.
         """
         raise NotImplementedError

@@ -110,6 +110,23 @@ copies `.env.example` to `.env` if it doesn't already exist. Other targets:
 The Makefile needs a POSIX shell (`test`, `cp`) and `make` itself, so on
 Windows run it from Git Bash or WSL, not plain `cmd.exe` or PowerShell.
 
+## Configuration
+
+### System prompt
+
+The system prompt is a set of instructions sent to the LLM with every
+request. It shapes the assistant's tone and behaviour. It applies to every
+conversation and is not stored in the database or shown in the chat.
+
+To change it, set `SYSTEM_PROMPT` in `backend/.env`:
+
+```bash
+SYSTEM_PROMPT=You are a concise assistant. Answer in two sentences or fewer.
+```
+
+If `SYSTEM_PROMPT` is not set, it defaults to `You are a helpful assistant.`
+(see `backend/app/config.py`). Restart the backend after changing it.
+
 ## API
 
 With the backend running, interactive API docs (Swagger UI) are at
