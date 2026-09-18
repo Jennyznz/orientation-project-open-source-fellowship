@@ -27,25 +27,56 @@ def test_not_found(path, message):
 
 
 @pytest.mark.parametrize(
-    "method, path, kwargs",
+    "method, path, kwargs, location",
     [
-        ("get", "/api/conversations?limit=0", {}),
-        ("get", "/api/conversations?limit=abc", {}),
-        ("post", "/api/conversations/missing/messages", {"json": {}}),
-        ("patch", "/api/conversations/missing", {"json": {"title": "   "}}),
+        ("get", "/api/conversations?limit=0", {}, ["query", "limit"]),
+        ("get", "/api/conversations?limit=abc", {}, ["query", "limit"]),
+        ("post", "/api/conversations/missing/messages", {"json": {}}, ["body", "content"]),
+        ("patch", "/api/conversations/missing", {"json": {"title": "   "}}, ["body", "title"]),
         (
             "post",
             "/api/conversations",
             {"content": "{", "headers": {"Content-Type": "application/json"}},
+            ["body", 1],
         ),
     ],
 )
-def test_request_validation(method, path, kwargs):
+def test_request_validation(method, path, kwargs, location):
     response = client.request(method, path, **kwargs)
     assert response.status_code == 422
-    assert response.json() == {
-        "error": {"code": 422, "message": "Request validation failed"}
-    }
+    error = response.json()["error"]
+    assert error["code"] == 422
+    assert error["message"] == "Request validation failed"
+    assert len(error["details"]) == 1
+    detail = error["details"][0]
+    assert detail["loc"] == location
+    assert detail["msg"]
+    assert detail["type"]
+    assert set(detail) == {"loc", "msg", "type"}
+
+
+def test_validation_reports_all_invalid_fields():
+    response = client.get("/api/conversations?limit=0&offset=-1")
+
+    assert response.status_code == 422
+    details = response.json()["error"]["details"]
+    assert [detail["loc"] for detail in details] == [
+        ["query", "limit"],
+        ["query", "offset"],
+    ]
+
+
+def test_validation_does_not_echo_submitted_content():
+    response = client.post(
+        "/api/conversations/missing/messages",
+        json={"content": {"secret": "private message"}},
+    )
+
+    assert response.status_code == 422
+    detail = response.json()["error"]["details"][0]
+    assert detail["loc"] == ["body", "content"]
+    assert detail["type"] == "string_type"
+    assert "private message" not in response.text
 
 
 def test_method_not_allowed_preserves_allow_header():
