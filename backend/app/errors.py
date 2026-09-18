@@ -1,4 +1,5 @@
 """Consistent JSON responses for application and framework errors."""
+
 import logging
 
 from fastapi import FastAPI, Request

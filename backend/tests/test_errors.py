@@ -31,8 +31,18 @@ def test_not_found(path, message):
     [
         ("get", "/api/conversations?limit=0", {}, ["query", "limit"]),
         ("get", "/api/conversations?limit=abc", {}, ["query", "limit"]),
-        ("post", "/api/conversations/missing/messages", {"json": {}}, ["body", "content"]),
-        ("patch", "/api/conversations/missing", {"json": {"title": "   "}}, ["body", "title"]),
+        (
+            "post",
+            "/api/conversations/missing/messages",
+            {"json": {}},
+            ["body", "content"],
+        ),
+        (
+            "patch",
+            "/api/conversations/missing",
+            {"json": {"title": "   "}},
+            ["body", "title"],
+        ),
         (
             "post",
             "/api/conversations",
@@ -83,9 +93,7 @@ def test_method_not_allowed_preserves_allow_header():
     response = client.put("/api/conversations")
     assert response.status_code == 405
     assert response.headers["allow"]
-    assert response.json() == {
-        "error": {"code": 405, "message": "Method Not Allowed"}
-    }
+    assert response.json() == {"error": {"code": 405, "message": "Method Not Allowed"}}
 
 
 def test_http_exception_preserves_custom_headers():
@@ -108,8 +116,12 @@ def test_http_exception_preserves_custom_headers():
     }
 
 
-@pytest.mark.parametrize("origin", [None, settings.frontend_origin, "https://untrusted.example"])
-def test_unhandled_exception_is_logged_without_exposing_details(monkeypatch, caplog, origin):
+@pytest.mark.parametrize(
+    "origin", [None, settings.frontend_origin, "https://untrusted.example"]
+)
+def test_unhandled_exception_is_logged_without_exposing_details(
+    monkeypatch, caplog, origin
+):
     def broken_provider():
         raise RuntimeError("private provider credentials")
 
@@ -134,8 +146,7 @@ def test_unhandled_exception_is_logged_without_exposing_details(monkeypatch, cap
     else:
         assert "access-control-allow-origin" not in response.headers
     assert any(
-        record.name == "app.errors" and record.exc_info
-        for record in caplog.records
+        record.name == "app.errors" and record.exc_info for record in caplog.records
     )
 
 
