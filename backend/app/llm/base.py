@@ -23,5 +23,7 @@ class LLMProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def stream_reply(self, history: list[dict]) -> AsyncIterator[str]:
+    def stream_reply(
+        self, history: list[dict], system_prompt: str
+    ) -> AsyncIterator[str]:
         raise NotImplementedError

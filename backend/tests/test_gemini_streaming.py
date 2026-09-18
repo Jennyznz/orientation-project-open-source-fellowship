@@ -32,13 +32,14 @@ async def test_gemini_streams_text_and_maps_roles(monkeypatch):
         {"role": "assistant", "content": "hello"},
     ]
 
-    assert [text async for text in provider.stream_reply(history)] == [
+    assert [text async for text in provider.stream_reply(history, "Be concise.")] == [
         "Hello",
         " world",
     ]
     client.models.generate_content_stream.assert_called_once()
     kwargs = client.models.generate_content_stream.call_args.kwargs
     assert kwargs["model"] == settings.gemini_model
+    assert kwargs["config"].system_instruction == "Be concise."
     assert [content.role for content in kwargs["contents"]] == ["user", "model"]
     assert [content.parts[0].text for content in kwargs["contents"]] == ["hi", "hello"]
     assert closed == [True]
@@ -62,7 +63,7 @@ async def test_gemini_closes_upstream_when_stopped(monkeypatch):
     monkeypatch.setattr(
         "app.llm.gemini_provider.genai.Client", Mock(return_value=client)
     )
-    stream = GeminiProvider().stream_reply([])
+    stream = GeminiProvider().stream_reply([], "Be concise.")
 
     assert await anext(stream) == "first"
     await stream.aclose()

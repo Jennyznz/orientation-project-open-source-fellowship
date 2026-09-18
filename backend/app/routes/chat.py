@@ -197,7 +197,9 @@ def stream_message(
         try:
             llm = get_llm_provider()
             chunks = []
-            async with aclosing(llm.stream_reply(history)) as stream:
+            async with aclosing(
+                llm.stream_reply(history, settings.system_prompt)
+            ) as stream:
                 async for chunk in stream:
                     if chunk:
                         chunks.append(chunk)

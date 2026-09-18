@@ -38,7 +38,9 @@ class GeminiProvider(LLMProvider):
         )
         return response.text
 
-    async def stream_reply(self, history: list[dict]) -> AsyncIterator[str]:
+    async def stream_reply(
+        self, history: list[dict], system_prompt: str
+    ) -> AsyncIterator[str]:
         contents = [
             types.Content(
                 role="model" if m["role"] == "assistant" else "user",
@@ -50,7 +52,8 @@ class GeminiProvider(LLMProvider):
             model=settings.gemini_model,
             contents=contents,
             config=types.GenerateContentConfig(
-                http_options=types.HttpOptions(timeout=30000)
+                system_instruction=system_prompt,
+                http_options=types.HttpOptions(timeout=30000),
             ),
         )
         with closing(stream):

@@ -23,9 +23,12 @@ def _events(response):
 
 def test_stream_sends_chunks_and_saves_reply(monkeypatch):
     history = []
+    prompts = []
+    monkeypatch.setattr(chat.settings, "system_prompt", "Answer like a pirate.")
 
-    async def stream_reply(messages):
+    async def stream_reply(messages, system_prompt):
         history.extend(messages)
+        prompts.append(system_prompt)
         yield 'Hello "friend"\n'
         yield ""
         yield "Goodbye 🌍"
@@ -53,6 +56,7 @@ def test_stream_sends_chunks_and_saves_reply(monkeypatch):
     assert message["id"]
     assert message["created_at"]
     assert history == [{"role": "user", "content": "hello"}]
+    assert prompts == ["Answer like a pirate."]
     messages = client.get(path).json()["messages"]
     assert len(messages) == 2
     assert next(m for m in messages if m["role"] == "assistant") == message
@@ -71,7 +75,7 @@ def test_stream_sends_chunks_and_saves_reply(monkeypatch):
 def test_stream_failure_does_not_save_partial_reply(monkeypatch, partial):
     closed = []
 
-    async def stream_reply(history):
+    async def stream_reply(history, system_prompt):
         try:
             if partial:
                 yield "Partial reply"
@@ -102,7 +106,7 @@ def test_stream_failure_does_not_save_partial_reply(monkeypatch, partial):
 
 
 def test_empty_stream_returns_error(monkeypatch):
-    async def stream_reply(history):
+    async def stream_reply(history, system_prompt):
         yield ""
 
     monkeypatch.setattr(
@@ -130,7 +134,7 @@ def test_stream_provider_setup_failure_returns_error(monkeypatch):
 
 
 def test_stream_save_failure_returns_error(monkeypatch):
-    async def stream_reply(history):
+    async def stream_reply(history, system_prompt):
         yield "hello"
 
     monkeypatch.setattr(
@@ -186,7 +190,7 @@ async def test_stream_delivers_before_completion_and_closes_on_disconnect(
     closed = asyncio.Event()
     sent = []
 
-    async def stream_reply(history):
+    async def stream_reply(history, system_prompt):
         try:
             yield "first"
             await delivered.wait()
