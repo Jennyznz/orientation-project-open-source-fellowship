@@ -19,7 +19,7 @@ export default function MessageInput({ onSend, disabled }) {
         placeholder="Type a message..."
         disabled={disabled}
       />
-      <button onClick={handleSubmit} disabled={disabled}>
+      <button className="send-button" onClick={handleSubmit} disabled={disabled}>
         Send
       </button>
     </div>
