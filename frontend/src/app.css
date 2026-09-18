@@ -136,3 +136,28 @@ main {
 .new-conversation-button {
   cursor: pointer;
 }
+
+.thinking-text {
+  font-style: italic;
+}
+
+.error-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-error-bg);
+  color: var(--color-error-fg);
+  border: 1px solid var(--color-error-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.error-banner-retry {
+  background: none;
+  border: 1px solid var(--color-error-fg);
+  color: var(--color-error-fg);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
