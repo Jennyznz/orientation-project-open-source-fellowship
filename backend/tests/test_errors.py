@@ -4,6 +4,7 @@ import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
+from app.config import settings
 from app.errors import register_exception_handlers
 from app.main import app
 from app.routes import chat
@@ -76,7 +77,8 @@ def test_http_exception_preserves_custom_headers():
     }
 
 
-def test_unhandled_exception_is_logged_without_exposing_details(monkeypatch, caplog):
+@pytest.mark.parametrize("origin", [None, settings.frontend_origin, "https://untrusted.example"])
+def test_unhandled_exception_is_logged_without_exposing_details(monkeypatch, caplog, origin):
     def broken_provider():
         raise RuntimeError("private provider credentials")
 
@@ -86,6 +88,7 @@ def test_unhandled_exception_is_logged_without_exposing_details(monkeypatch, cap
         response = client.post(
             f"/api/conversations/{conversation['id']}/messages",
             json={"content": "hello"},
+            headers={"Origin": origin} if origin else {},
         )
 
     assert response.status_code == 500
@@ -93,7 +96,27 @@ def test_unhandled_exception_is_logged_without_exposing_details(monkeypatch, cap
         "error": {"code": 500, "message": "Internal server error"}
     }
     assert "private provider credentials" not in response.text
+    if origin == settings.frontend_origin:
+        assert response.headers["access-control-allow-origin"] == origin
+        assert response.headers["access-control-allow-credentials"] == "true"
+        assert "Origin" in response.headers["vary"]
+    else:
+        assert "access-control-allow-origin" not in response.headers
     assert any(
         record.name == "app.errors" and record.exc_info
         for record in caplog.records
     )
+
+
+def test_cors_preflight():
+    response = client.options(
+        "/api/conversations",
+        headers={
+            "Origin": settings.frontend_origin,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "Content-Type",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == settings.frontend_origin
+    assert "POST" in response.headers["access-control-allow-methods"]
