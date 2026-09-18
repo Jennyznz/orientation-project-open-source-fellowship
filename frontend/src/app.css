@@ -8,15 +8,33 @@
 }
 
 aside {
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--color-border);
   width: 250px;
   padding: 12px;
   overflow-y: auto;
+}
+
+#sidebar-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
 
   & h1 {
     font-size: 18px;
-    margin-bottom: 24px;
+    margin: 0;
   }
+}
+
+#theme-toggle {
+  align-self: flex-start;
+  padding: 6px 10px;
+  background: var(--color-button-bg);
+  color: var(--color-button-fg);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
 }
 
 main {
@@ -34,7 +52,7 @@ main {
     min-height: 300px;
     border-radius: 8px;
     padding: 16px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     margin-bottom: 16px;
   }
 }
@@ -74,14 +92,14 @@ main {
     text-align: left;
 
     &.selected {
-      background: #ddd;
-      outline: 1px solid #333;
+      background: var(--color-selected-bg);
+      outline: 1px solid var(--color-selected-outline);
     }
   }
 }
 
 .muted-text {
-  color: #888;
+  color: var(--color-muted);
 }
 
 .message-item {
@@ -96,8 +114,50 @@ main {
 .message-input-field {
   flex: 1;
   padding: 8px;
+  background: var(--color-input-bg);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.send-button {
+  padding: 8px 12px;
+  background: var(--color-button-bg);
+  color: var(--color-button-fg);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+  }
 }
 
 .new-conversation-button {
+  cursor: pointer;
+}
+
+.thinking-text {
+  font-style: italic;
+}
+
+.error-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-error-bg);
+  color: var(--color-error-fg);
+  border: 1px solid var(--color-error-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.error-banner-retry {
+  background: none;
+  border: 1px solid var(--color-error-fg);
+  color: var(--color-error-fg);
+  border-radius: 6px;
+  padding: 4px 10px;
   cursor: pointer;
 }

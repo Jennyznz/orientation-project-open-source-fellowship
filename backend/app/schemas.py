@@ -2,11 +2,16 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class MessageCreate(BaseModel):
-    content: str = Field(..., max_length=10000)
+    content: str = Field(
+        ...,
+        max_length=10000,
+        description="The user's message content to send to the assistant.",
+        examples=["What's the capital of France?"],
+    )
 
     @field_validator("content", mode="before")
     @classmethod
@@ -27,16 +32,34 @@ class MessageOut(BaseModel):
     content: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "id": "3f9a2b1c-4d5e-4f6a-8b7c-9d0e1f2a3b4c",
+                "role": "assistant",
+                "content": "Paris is the capital of France.",
+                "created_at": "2026-01-01T12:00:00",
+            }
+        },
+    )
 
 
 class ConversationCreate(BaseModel):
-    title: str | None = None
+    title: str | None = Field(
+        default=None,
+        description="Optional title. Defaults to 'New Conversation' if omitted.",
+        examples=["Trip planning"],
+    )
 
 
 class ConversationUpdate(BaseModel):
-    title: str = Field(..., max_length=200)
+    title: str = Field(
+        ...,
+        max_length=200,
+        description="New title. Must not be blank after stripping whitespace.",
+        examples=["Trip planning (updated)"],
+    )
 
     @field_validator("title", mode="before")
     @classmethod
@@ -56,8 +79,16 @@ class ConversationOut(BaseModel):
     title: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "id": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+                "title": "Trip planning",
+                "created_at": "2026-01-01T12:00:00",
+            }
+        },
+    )
 
 
 class ConversationDetailOut(ConversationOut):
@@ -66,6 +97,8 @@ class ConversationDetailOut(ConversationOut):
 
 class ConversationListOut(BaseModel):
     items: list[ConversationOut]
-    total: int
-    limit: int
-    offset: int
+    total: int = Field(
+        description="Total number of conversations, ignoring limit/offset."
+    )
+    limit: int = Field(description="The limit that was applied to this response.")
+    offset: int = Field(description="The offset that was applied to this response.")
