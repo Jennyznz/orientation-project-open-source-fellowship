@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import Base, engine
+from app.errors import register_exception_handlers
 from app.middleware import RequestLoggingMiddleware
 from app.routes import chat, health
 
@@ -20,22 +21,23 @@ logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.I
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(
+api = FastAPI(
     title=settings.app_name,
     description="A barebones LLM chat API: conversations, messages, and a pluggable LLM provider.",
     version="0.1.0",
 )
+register_exception_handlers(api)
 
 # Register new logging middleware
-app.add_middleware(RequestLoggingMiddleware)
+api.add_middleware(RequestLoggingMiddleware)
 
-app.add_middleware(
-    CORSMiddleware,
+api.include_router(health.router, prefix="/api")
+api.include_router(chat.router)
+
+app = CORSMiddleware(
+    app=api,
     allow_origins=[settings.frontend_origin],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.include_router(health.router, prefix="/api")
-app.include_router(chat.router)

@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
-from app.main import app
+from app.main import api
 
 engine = create_engine(
     "sqlite://",
@@ -22,7 +22,7 @@ def _override_get_db():
         db.close()
 
 
-app.dependency_overrides[get_db] = _override_get_db
+api.dependency_overrides[get_db] = _override_get_db
 
 
 @pytest.fixture(autouse=True)
