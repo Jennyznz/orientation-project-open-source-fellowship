@@ -12,6 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "MLH LLM Fellowship Project"
     database_url: str = "sqlite:///./app.db"
+    log_level: str = "INFO"
 
     # LLM provider config. Fellows will extend this to support
     # multiple providers behind the abstract interface in app/llm/.
@@ -23,7 +24,6 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-    log_level: str = "INFO"
 
 
 settings = Settings()
