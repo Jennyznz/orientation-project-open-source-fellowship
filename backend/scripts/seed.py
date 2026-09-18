@@ -15,8 +15,10 @@ SAMPLE_CONVERSATIONS = [
             ("user", "What should I pack for a weekend in Lisbon?"),
             (
                 "assistant",
-                "Light layers, a rain jacket, and comfortable walking shoes -- "
-                "Lisbon's hills are no joke.",
+                (
+                    "Light layers, a rain jacket, and comfortable walking shoes -- "
+                    "Lisbon's hills are no joke."
+                ),
             ),
         ],
     },
@@ -29,9 +31,11 @@ SAMPLE_CONVERSATIONS = [
             ),
             (
                 "assistant",
-                "Check whether the request body matches your Pydantic schema -- "
-                "a validation error before your handler runs often shows up as a 500 "
-                "if it's not being caught.",
+                (
+                    "Check whether the request body matches your Pydantic schema -- "
+                    "a validation error before your handler runs often shows up as a "
+                    "500 if it's not being caught."
+                ),
             ),
         ],
     },
@@ -39,7 +43,17 @@ SAMPLE_CONVERSATIONS = [
 
 
 def seed(db: Session) -> None:
+    sample_titles = [entry["title"] for entry in SAMPLE_CONVERSATIONS]
+    existing_titles = {
+        title
+        for (title,) in db.query(Conversation.title).filter(
+            Conversation.title.in_(sample_titles)
+        )
+    }
+
     for entry in SAMPLE_CONVERSATIONS:
+        if entry["title"] in existing_titles:
+            continue
         convo = Conversation(title=entry["title"])
         db.add(convo)
         db.flush()
