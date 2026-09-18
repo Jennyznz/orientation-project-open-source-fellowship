@@ -24,8 +24,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         duration = time.perf_counter() - start_time
 
         # Log relevant fields
-        logger.log(
-            log_level_int,
+        logger.info(
             f"{request.method} {request.url.path} - Status: {response.status_code} - Duration: {duration: .4f}s"
         )
 
