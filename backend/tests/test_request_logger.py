@@ -23,7 +23,6 @@ async def test_request_logger_logs_request_details():
 
     # Replace the request logger with a mock logger
     with patch("app.middleware.logger") as mock_logger:
-
         # Run mock request and call_next function
         await middleware.dispatch(request, call_next)
 
@@ -56,7 +55,6 @@ async def test_request_logger_returns_response():
 
     # Replace the logger with a mock
     with patch("app.middleware.logger"):
-
         # Run the middleware
         result = await middleware.dispatch(request, call_next)
 
