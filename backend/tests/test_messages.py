@@ -1,6 +1,7 @@
 from unittest.mock import Mock
 
 import pytest
+from app.config import Settings, settings
 from app.main import app
 from app.routes import chat
 from fastapi.testclient import TestClient
@@ -58,7 +59,7 @@ def test_send_message_accepts_and_trims_valid_content(content, expected, monkeyp
     assert response.status_code == 200
     assert response.json()["content"] == "Hello back"
     provider.generate_reply.assert_called_once_with(
-        [{"role": "user", "content": expected}]
+        [{"role": "user", "content": expected}], settings.system_prompt
     )
 
     fetched = client.get(f"/api/conversations/{convo['id']}")
@@ -69,3 +70,26 @@ def test_send_message_accepts_and_trims_valid_content(content, expected, monkeyp
     user_messages = [m for m in convo["messages"] if m["role"] == "user"]
     assert len(user_messages) == 1
     assert user_messages[0]["content"] == expected
+
+
+def test_send_message_passes_configured_system_prompt(monkeypatch):
+    """The configured system prompt reaches the provider on every call."""
+    monkeypatch.setattr(settings, "system_prompt", "Always reply in pirate speak.")
+    provider = Mock()
+    provider.generate_reply.return_value = "Arrr"
+    monkeypatch.setattr(chat, "get_llm_provider", lambda: provider)
+    convo = client.post("/api/conversations", json={}).json()
+
+    response = client.post(
+        f"/api/conversations/{convo['id']}/messages", json={"content": "hi"}
+    )
+
+    assert response.status_code == 200
+    history, system_prompt = provider.generate_reply.call_args.args
+    assert history == [{"role": "user", "content": "hi"}]
+    assert system_prompt == "Always reply in pirate speak."
+
+
+def test_system_prompt_falls_back_to_default():
+    """With no SYSTEM_PROMPT in the environment, the default is used."""
+    assert Settings(_env_file=None).system_prompt == "You are a helpful assistant."
