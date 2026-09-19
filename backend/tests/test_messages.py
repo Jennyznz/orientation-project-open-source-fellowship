@@ -77,6 +77,7 @@ def test_send_message_passes_configured_system_prompt(monkeypatch):
     monkeypatch.setattr(settings, "system_prompt", "Always reply in pirate speak.")
     provider = Mock()
     provider.generate_reply.return_value = "Arrr"
+    provider.generate_conversation_title.return_value = "..."
     monkeypatch.setattr(chat, "get_llm_provider", lambda: provider)
     convo = client.post("/api/conversations", json={}).json()
 
