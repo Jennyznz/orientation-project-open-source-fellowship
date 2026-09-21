@@ -95,6 +95,11 @@ Then visit `http://localhost:5173`.
 ./scripts/dev.sh
 ```
 
+This uses [`concurrently`](https://www.npmjs.com/package/concurrently) (a
+frontend dev dependency, so run `npm install` in `frontend/` first). Output
+from each process is labeled `[backend]` or `[frontend]`, and a single
+Ctrl+C stops both.
+
 ### Or use the Makefile
 
 ```bash
