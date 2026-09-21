@@ -79,9 +79,10 @@ export default function App() {
     setMainError(null);
     let currentConversationId = conversationState.conversationId;
     let tempId = null;
+    let isNewConversation = !currentConversationId
 
     try {
-      if (!currentConversationId) {
+      if (isNewConversation) {
         const newConversation = await createNewConversation();
         currentConversationId = newConversation.id;
       }
@@ -114,7 +115,9 @@ export default function App() {
       });
     }
     
-    fetchConversations()
+    if (isNewConversation) {
+      fetchConversations()
+    }
   }
 
   async function handleSelectConversation(id) {
