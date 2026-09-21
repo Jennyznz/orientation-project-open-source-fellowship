@@ -8,9 +8,16 @@ export default function MessageList({ messages, loading }) {
         <div key={m.id} className="message-item">
           <strong>{m.role === "user" ? "You" : "Assistant"}:</strong>{" "}
           {m.content}
+          {m.streaming && (
+            <span role="status" aria-label="Assistant is typing">
+              {!m.content && <span className="thinking-text">Thinking...</span>}
+              <span className="streaming-cursor" aria-hidden="true">▍</span>
+            </span>
+          )}
+          {m.interrupted && <span className="muted-text"> (Reply interrupted)</span>}
         </div>
       ))}
-      {loading && (
+      {loading && !messages.some((m) => m.streaming) && (
         <div className="message-item muted-text">
           <strong>Assistant:</strong> <span className="thinking-text">Thinking...</span>
         </div>

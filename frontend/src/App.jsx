@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   createConversation,
   getConversation,
   listConversations,
-  sendMessage,
+  streamMessage,
 } from "./api/client.js";
 import ErrorBanner from "./components/ErrorBanner.jsx";
 import MessageInput from "./components/MessageInput.jsx";
@@ -17,6 +17,7 @@ const initialState = {
   conversationId: null,
   messages: [],
   loading: false,
+  historyError: false,
 };
 
 function getInitialTheme() {
@@ -27,8 +28,8 @@ function getInitialTheme() {
   return "light";
 }
 
-// Barebones single-conversation UI. There's no streaming yet -- those are fellow issues (see ISSUES.md).
 export default function App() {
+  const activeRequestRef = useRef(null);
   const [conversationState, setConversationState] = useState(initialState);
   const [conversations, setConversations] = useState([]);
   const [theme, setTheme] = useState(getInitialTheme);
@@ -37,6 +38,10 @@ export default function App() {
 
   useEffect(() => {
     fetchConversations();
+    return () => {
+      activeRequestRef.current?.abort();
+      activeRequestRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
@@ -62,77 +67,103 @@ export default function App() {
     }
   }
 
-  async function createNewConversation() {
-    const newConversation = await createConversation("New Conversation");
-    setConversationState(() => ({
-      ...initialState,
-      conversationId: newConversation.id,
-    }));
-    setConversations((prev) => [
-      { id: newConversation.id, title: newConversation.title },
-      ...prev,
-    ]);
-    return newConversation;
+  function startRequest() {
+    activeRequestRef.current?.abort();
+    const controller = new AbortController();
+    activeRequestRef.current = controller;
+    return controller;
   }
 
   async function handleSend(text) {
+    if (activeRequestRef.current || conversationState.loading || conversationState.historyError) return;
+    const controller = startRequest();
+    const isCurrent = () => activeRequestRef.current === controller;
     setMainError(null);
     let currentConversationId = conversationState.conversationId;
-    let tempId = null;
+    const assistantId = `assistant-${Date.now()}`;
+    const userId = `user-${Date.now()}`;
+    setConversationState((prev) => ({
+      ...prev,
+      loading: true,
+      messages: [
+        ...prev.messages,
+        { id: userId, role: "user", content: text },
+        { id: assistantId, role: "assistant", content: "", streaming: true },
+      ],
+    }));
 
     try {
       if (!currentConversationId) {
-        const newConversation = await createNewConversation();
-        currentConversationId = newConversation.id;
+        const conversation = await createConversation("New Conversation");
+        setConversations((prev) => [conversation, ...prev]);
+        if (!isCurrent()) return;
+        currentConversationId = conversation.id;
+        setConversationState((prev) => ({ ...prev, conversationId: conversation.id }));
       }
-
-      tempId = `pending-${Date.now()}`;
-      setConversationState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, { id: tempId, role: "user", content: text }],
-        loading: true,
-      }));
-
-      await sendMessage(currentConversationId, text);
-      const full = await getConversation(currentConversationId);
-      setConversationState((prev) => ({
-        ...prev,
-        messages: full.messages,
-        loading: false,
-      }));
-    } catch {
-      setConversationState((prev) => ({
-        ...prev,
-        loading: false,
-        messages: tempId
-          ? prev.messages.filter((m) => m.id !== tempId)
-          : prev.messages,
-      }));
-      setMainError({
-        message: "Message failed to send.",
-        retry: () => handleSend(text),
+      const message = await streamMessage(currentConversationId, text, {
+        signal: controller.signal,
+        onToken: (token) => {
+          if (!isCurrent()) return;
+          setConversationState((prev) => ({
+            ...prev,
+            messages: prev.messages.map((m) => m.id === assistantId
+              ? { ...m, content: m.content + token } : m),
+          }));
+        },
       });
+      if (!isCurrent()) return;
+      setConversationState((prev) => ({
+        ...prev,
+        loading: false,
+        messages: prev.messages.map((m) => m.id === assistantId ? message : m),
+      }));
+    } catch (error) {
+      if (!isCurrent()) return;
+      setConversationState((prev) => ({
+        ...prev,
+        loading: false,
+        messages: currentConversationId
+          ? prev.messages.map((m) => m.id === assistantId
+            ? { ...m, streaming: false, interrupted: true } : m)
+          : prev.messages.filter((m) => m.id !== assistantId && m.id !== userId),
+      }));
+      // The server may already have saved the user message; do not resend it automatically.
+      setMainError({
+        message: error.message || "Could not receive the reply.",
+        retry: currentConversationId ? undefined : () => handleSend(text),
+      });
+    } finally {
+      if (isCurrent()) activeRequestRef.current = null;
     }
   }
 
   async function handleSelectConversation(id) {
+    const controller = startRequest();
+    setConversationState({ ...initialState, conversationId: id, loading: true });
     setMainError(null);
     try {
       const conversation = await getConversation(id);
+      if (activeRequestRef.current !== controller) return;
       setConversationState(() => ({
         ...initialState,
         conversationId: conversation.id,
         messages: conversation.messages,
       }));
     } catch {
+      if (activeRequestRef.current !== controller) return;
+      setConversationState((prev) => ({ ...prev, loading: false, historyError: true }));
       setMainError({
         message: "Couldn't load that conversation.",
         retry: () => handleSelectConversation(id),
       });
+    } finally {
+      if (activeRequestRef.current === controller) activeRequestRef.current = null;
     }
   }
 
   async function handleNewConversation() {
+    activeRequestRef.current?.abort();
+    activeRequestRef.current = null;
     setMainError(null);
     setConversationState(initialState);
   }
@@ -167,7 +198,7 @@ export default function App() {
           />
           <MessageInput
             onSend={handleSend}
-            disabled={conversationState.loading}
+            disabled={conversationState.loading || conversationState.historyError}
           />
         </main>
       </div>
