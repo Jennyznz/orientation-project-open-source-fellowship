@@ -6,6 +6,9 @@ export default function Sidebar({
   onSelectConversation,
   onNewConversation,
   selectedConversationId,
+  onLoadMore,
+  canLoadMore,
+  loadingMore,
 }) {
   return (
     <div id="sidebar">
@@ -14,6 +17,9 @@ export default function Sidebar({
         conversations={conversations}
         onSelectConversation={onSelectConversation}
         selectedConversationId={selectedConversationId}
+        onLoadMore={onLoadMore}
+        canLoadMore={canLoadMore}
+        loadingMore={loadingMore}
       />
     </div>
   );

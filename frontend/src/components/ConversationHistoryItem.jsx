@@ -5,7 +5,7 @@ export default function ConversationHistoryItem({
   isSelected,
 }) {
   return (
-    <li key={id}>
+    <li>
       <button
         type="button"
         onClick={() => onSelectConversation(id)}

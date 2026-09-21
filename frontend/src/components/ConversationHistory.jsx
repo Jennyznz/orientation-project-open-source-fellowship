@@ -1,10 +1,16 @@
+import useInfiniteScroll from "../hooks/useInfiniteScroll.js";
 import ConversationHistoryItem from "./ConversationHistoryItem.jsx";
 
 export default function ConversationHistory({
   conversations,
   onSelectConversation,
   selectedConversationId,
+  onLoadMore,
+  canLoadMore,
+  loadingMore,
 }) {
+  const infiniteScrollRef = useInfiniteScroll(onLoadMore, canLoadMore);
+
   return (
     <div id="conversation-history">
       <p className="muted-text">Recents</p>
@@ -22,6 +28,8 @@ export default function ConversationHistory({
           />
         ))}
       </ul>
+      {loadingMore && <p className="muted-text">Loading...</p>}
+      <div ref={infiniteScrollRef} className="scroll-sentinel" aria-hidden="true" />
     </div>
   );
 }
