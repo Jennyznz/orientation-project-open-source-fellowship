@@ -1,10 +1,11 @@
 from unittest.mock import Mock
 
 import pytest
+from fastapi.testclient import TestClient
+
 from app.config import Settings, settings
 from app.main import app
 from app.routes import chat
-from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
