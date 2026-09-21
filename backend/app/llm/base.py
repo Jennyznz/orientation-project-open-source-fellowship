@@ -7,6 +7,7 @@ more providers (OpenAI, local/Ollama, etc.) behind this same interface
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 
 
 class LLMProvider(ABC):
@@ -28,4 +29,10 @@ class LLMProvider(ABC):
         dicts, return a short, human-readable title summarizing the
         conversation.
         """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def stream_reply(
+        self, history: list[dict], system_prompt: str
+    ) -> AsyncIterator[str]:
         raise NotImplementedError
