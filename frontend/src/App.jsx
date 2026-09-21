@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 
 import {
   createConversation,
+  deleteConversation,
   getConversation,
   listConversations,
+  renameConversation,
   sendMessage,
 } from "./api/client.js";
 import ErrorBanner from "./components/ErrorBanner.jsx";
@@ -132,6 +134,37 @@ export default function App() {
     }
   }
 
+  async function handleRenameConversation(id, title) {
+    setMainError(null);
+    try {
+      const updated = await renameConversation(id, title);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, title: updated.title } : c)),
+      );
+    } catch {
+      setMainError({
+        message: "Couldn't rename that conversation.",
+        retry: () => handleRenameConversation(id, title),
+      });
+    }
+  }
+
+  async function handleDeleteConversation(id) {
+    setMainError(null);
+    try {
+      await deleteConversation(id);
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      setConversationState((prev) =>
+        prev.conversationId === id ? initialState : prev,
+      );
+    } catch {
+      setMainError({
+        message: "Couldn't delete that conversation.",
+        retry: () => handleDeleteConversation(id),
+      });
+    }
+  }
+
   async function handleNewConversation() {
     setMainError(null);
     setConversationState(initialState);
@@ -154,6 +187,8 @@ export default function App() {
             conversations={conversations}
             onNewConversation={handleNewConversation}
             onSelectConversation={handleSelectConversation}
+            onRenameConversation={handleRenameConversation}
+            onDeleteConversation={handleDeleteConversation}
             selectedConversationId={conversationState.conversationId}
           />
         </aside>
