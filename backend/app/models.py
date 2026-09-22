@@ -28,6 +28,9 @@ class Conversation(Base):
     title = Column(String, default="New Conversation")
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # Cascade is enforced by the ORM, not by SQLite: deleting a Conversation
+    # through a session deletes its messages, but a bulk query.delete() or raw
+    # SQL leaves them orphaned. See "Cascade deletes" in the README.
     messages = relationship(
         "Message", back_populates="conversation", cascade="all, delete-orphan"
     )
@@ -37,7 +40,12 @@ class Message(Base):
     __tablename__ = "messages"
 
     id = Column(String, primary_key=True, default=_uuid)
-    conversation_id = Column(String, ForeignKey("conversations.id"), nullable=False)
+    # Indexed: every message lookup filters on this column (loading a
+    # conversation's history, cascading a delete), and SQLite does not
+    # index foreign keys on its own.
+    conversation_id = Column(
+        String, ForeignKey("conversations.id"), nullable=False, index=True
+    )
     role = Column(String, nullable=False)  # "user" | "assistant"
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

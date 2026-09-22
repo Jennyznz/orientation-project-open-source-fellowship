@@ -222,6 +222,39 @@ exist. Either:
   alembic upgrade head
 ```
 
+## Data model
+
+### Indexes
+
+`messages.conversation_id` is indexed. Every message lookup filters on it --
+loading a conversation's history, building the prompt for a reply, cascading
+a delete -- and SQLite does not index foreign keys automatically, so without
+it those queries scan the whole table.
+
+### Cascade deletes
+
+Deleting a conversation deletes its messages, but that rule lives in the ORM
+(`cascade="all, delete-orphan"` on `Conversation.messages`), not in the
+database. SQLAlchemy loads the child rows and deletes them itself.
+
+What that means in practice:
+
+| How you delete | Messages |
+| --- | --- |
+| `DELETE /api/conversations/{id}` (what the app does) | deleted |
+| `session.delete(conversation)` | deleted |
+| `session.query(Conversation).filter(...).delete()` | orphaned |
+| raw `DELETE FROM conversations ...` | orphaned |
+
+The last two bypass the ORM, so nothing cleans up the messages. They are not
+rejected either: SQLite only enforces foreign keys when `PRAGMA
+foreign_keys=ON` is set per connection, and this project does not set it.
+
+So: delete conversations through a session, which is what every current code
+path does. Enforcing this in the database instead would mean adding
+`ondelete="CASCADE"` to the foreign key, enabling the pragma on connect, and
+shipping a migration -- worth doing if bulk deletes are ever added.
+
 ## API
 
 With the backend running, interactive API docs (Swagger UI) are at
