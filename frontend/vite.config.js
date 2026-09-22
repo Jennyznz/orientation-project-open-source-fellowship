@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 // so the frontend can just call fetch("/api/...").
 // Under docker compose the backend is another container, so the target is
 // overridden with BACKEND_ORIGIN.
-const backendOrigin = process.env.BACKEND_ORIGIN || "http://localhost:8000";
+const backendOrigin = process.env.BACKEND_ORIGIN || "http://127.0.0.1:8000";
 
 export default defineConfig({
   plugins: [react()],
