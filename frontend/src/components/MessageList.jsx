@@ -1,7 +1,7 @@
 export default function MessageList({ messages, loading }) {
   return (
     <div id="message-list">
-      {messages.length === 0 && (
+      {messages.length === 0 && !loading && (
         <p className="muted-text">Say hello to start the conversation.</p>
       )}
       {messages.map((m) => (
@@ -19,8 +19,8 @@ export default function MessageList({ messages, loading }) {
         </div>
       ))}
       {loading && !messages.some((m) => m.streaming) && (
-        <div className="message-item muted-text">
-          <strong>Assistant:</strong> <span className="thinking-text">Thinking...</span>
+        <div className="message-item muted-text" role="status">
+          Loading conversation...
         </div>
       )}
     </div>
