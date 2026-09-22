@@ -35,6 +35,8 @@ backend/
     schemas.py          # Pydantic request/response models
     llm/                # pluggable LLM provider interface
     routes/             # health + conversation/chat endpoints
+  alembic/             # database migration scripts
+  alembic.ini           # alembic configuration
   tests/
 frontend/
   src/
@@ -55,6 +57,7 @@ cd backend
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # then add your Gemini_API_Key
+alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -65,6 +68,7 @@ cd backend
 py -3.12 -m venv .venv && source .venv/Scripts/activate
 pip install -r requirements.txt
 cp .env.example .env   # then add your Gemini_API_Key
+alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -126,6 +130,66 @@ SYSTEM_PROMPT=You are a concise assistant. Answer in two sentences or fewer.
 
 If `SYSTEM_PROMPT` is not set, it defaults to `You are a helpful assistant.`
 (see `backend/app/config.py`). Restart the backend after changing it.
+
+## Database migrations
+
+Tables are managed with [Alembic](https://alembic.sqlalchemy.org/) instead
+of being created automatically on startup. Run migrations after cloning
+and any time you pull changes that touch `app/models.py`.
+
+Apply all pending migrations:
+
+```bash
+alembic upgrade head
+```
+
+### Adding or changing a model
+
+If you add a new model to `app/models.py`, import it in
+`backend/alembic/env.py` alongside the existing models:
+
+```python
+from app.models import Conversation, Message  # add new models here
+```
+
+Alembic's autogenerate only detects models that are actually imported and
+registered on `Base.metadata`. If you skip this step, `alembic revision
+--autogenerate` will silently generate an empty migration with nothing in
+it, since it won't know the new model exists.
+
+Then generate a migration for the change and review the generated file
+before committing it, autogenerate is a good starting point but isn't
+always exactly right:
+
+```bash
+alembic revision --autogenerate -m "describe your change"
+```
+
+If you need to roll back the most recent migration:
+
+```bash
+alembic downgrade -1
+```
+
+### If you already have a local `app.db` from before this change
+
+Older versions of this project created tables automatically on startup.
+If your local `app.db` predates Alembic, it has tables but no migration
+history, so `alembic upgrade head` will fail because the tables already
+exist. Either:
+
+- Keep your existing data and mark it as up to date (safe if your schema
+  already matches `app/models.py`, which it will unless you've made local
+  edits outside of git):
+```bash
+  alembic stamp head
+```
+- Or delete it and let Alembic recreate it from scratch (loses local data,
+  but guarantees a clean slate):
+```bash
+  rm app.db
+  alembic upgrade head
+```
 
 ## API
 
