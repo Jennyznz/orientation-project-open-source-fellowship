@@ -271,3 +271,22 @@ test("late history responses cannot overwrite the selected conversation", async 
   });
   assert.equal(component(view, "Sidebar").props.selectedConversationId, "other");
 });
+
+test("loading history shows a loading status without suggesting an assistant reply", async (t) => {
+  const pending = deferred();
+  const view = await mount(t, async () => pending.promise);
+  let selecting;
+  await act(async () => { selecting = component(view, "Sidebar").props.onSelectConversation("other"); });
+  const loadingView = JSON.stringify(view.toJSON());
+  assert.match(loadingView, /Loading conversation/);
+  assert.equal(view.root.findAllByProps({ className: "empty-state" }).length, 0);
+  assert.doesNotMatch(loadingView, /Thinking|Assistant is typing|Say hello/);
+  assert.equal(component(view, "MessageInput").props.disabled, true);
+  await act(async () => {
+    pending.resolve(json({ id: "other", messages: [{ id: "old", role: "user", content: "Previous message" }] }));
+    await selecting;
+  });
+  assert.doesNotMatch(JSON.stringify(view.toJSON()), /Loading conversation/);
+  assert.equal(component(view, "MessageList").props.messages[0].content, "Previous message");
+  assert.equal(component(view, "MessageInput").props.disabled, false);
+});

@@ -7,7 +7,7 @@ function timestamp(value) {
 export default function MessageList({ messages, loading }) {
   return (
     <div id="message-list">
-      {messages.length === 0 && (
+      {messages.length === 0 && !loading && (
         <div className="empty-state"><span className="empty-spark" aria-hidden="true">✦</span><h2>What’s on your mind?</h2><p>Ask a question, explore an idea, or just say hello.</p></div>
       )}
       {messages.map((m) => (
@@ -27,8 +27,8 @@ export default function MessageList({ messages, loading }) {
         </div>
       ))}
       {loading && !messages.some((m) => m.streaming) && (
-        <div className="message-item muted-text">
-          <strong>Assistant:</strong> <span className="thinking-text">Thinking...</span>
+        <div className="message-item muted-text" role="status">
+          Loading conversation...
         </div>
       )}
     </div>
