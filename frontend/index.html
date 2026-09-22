@@ -11,9 +11,7 @@
           var theme =
             saved === "light" || saved === "dark"
               ? saved
-              : window.matchMedia("(prefers-color-scheme: dark)").matches
-              ? "dark"
-              : "light";
+              : "dark";
           document.documentElement.setAttribute("data-theme", theme);
         } catch (e) {}
       })();
