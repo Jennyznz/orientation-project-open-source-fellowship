@@ -99,6 +99,11 @@ Then visit `http://localhost:5173`.
 ./scripts/dev.sh
 ```
 
+This uses [`concurrently`](https://www.npmjs.com/package/concurrently) (a
+frontend dev dependency, so run `npm install` in `frontend/` first). Output
+from each process is labeled `[backend]` or `[frontend]`, and a single
+Ctrl+C stops both.
+
 ### Or use the Makefile
 
 ```bash
@@ -113,6 +118,32 @@ copies `.env.example` to `.env` if it doesn't already exist. Other targets:
 
 The Makefile needs a POSIX shell (`test`, `cp`) and `make` itself, so on
 Windows run it from Git Bash or WSL, not plain `cmd.exe` or PowerShell.
+
+### Or use Docker
+
+Runs both containers, no local Python or Node needed:
+
+```bash
+cp backend/.env.example backend/.env   # then add your Gemini API key
+docker compose up --build
+```
+
+Then visit `http://localhost:5173`. The Vite dev server proxies `/api` to the
+backend container, and both containers mount your working copy, so edits
+reload the same way they do locally.
+
+Stop with `Ctrl-C`, or `docker compose down` to remove the containers.
+
+Notes:
+
+- The backend reads `backend/.env`, the same file the local setup uses. It is
+  optional -- compose starts without it, but LLM calls need `GEMINI_API_KEY`.
+- `app.db` is written to `backend/` on your machine, so conversations survive
+  a container restart and are shared with a local (non-Docker) run.
+- Outside Docker the proxy still points at `http://localhost:8000`. Compose
+  overrides it with `BACKEND_ORIGIN=http://backend:8000`, because inside a
+  container `localhost` is that container itself.
+
 
 ## Configuration
 

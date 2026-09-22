@@ -52,3 +52,20 @@ export async function sendMessage(conversationId, content) {
   });
   return parseJsonResponse(res);
 }
+
+export async function renameConversation(id, title) {
+  const res = await fetch(`${BASE}/conversations/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+  return parseJsonResponse(res);
+}
+
+export async function deleteConversation(id) {
+  const res = await fetch(`${BASE}/conversations/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(extractErrorMessage(data, res.status));
+  }
+}
