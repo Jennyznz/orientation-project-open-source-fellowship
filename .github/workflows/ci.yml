@@ -31,7 +31,7 @@ jobs:
         run: |
           python -m pytest
 
-      - name: Check migrations match models
+      - name: Alembic check
         run: |
           alembic upgrade head
           alembic check
