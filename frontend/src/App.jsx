@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   createConversation,
+  deleteConversation,
   getConversation,
   listConversations,
+  renameConversation,
   streamMessage,
 } from "./api/client.js";
 import ErrorBanner from "./components/ErrorBanner.jsx";
@@ -67,16 +69,17 @@ export default function App() {
     }
   }
 
-  function startRequest() {
+  function startRequest(conversationId) {
     activeRequestRef.current?.abort();
     const controller = new AbortController();
+    controller.conversationId = conversationId;
     activeRequestRef.current = controller;
     return controller;
   }
 
   async function handleSend(text) {
     if (activeRequestRef.current || conversationState.loading || conversationState.historyError) return;
-    const controller = startRequest();
+    const controller = startRequest(conversationState.conversationId);
     const isCurrent = () => activeRequestRef.current === controller;
     setMainError(null);
     let currentConversationId = conversationState.conversationId;
@@ -98,6 +101,7 @@ export default function App() {
         setConversations((prev) => [conversation, ...prev]);
         if (!isCurrent()) return;
         currentConversationId = conversation.id;
+        controller.conversationId = conversation.id;
         setConversationState((prev) => ({ ...prev, conversationId: conversation.id }));
       }
       const message = await streamMessage(currentConversationId, text, {
@@ -138,7 +142,7 @@ export default function App() {
   }
 
   async function handleSelectConversation(id) {
-    const controller = startRequest();
+    const controller = startRequest(id);
     setConversationState({ ...initialState, conversationId: id, loading: true });
     setMainError(null);
     try {
@@ -158,6 +162,41 @@ export default function App() {
       });
     } finally {
       if (activeRequestRef.current === controller) activeRequestRef.current = null;
+    }
+  }
+
+  async function handleRenameConversation(id, title) {
+    setMainError(null);
+    try {
+      const updated = await renameConversation(id, title);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, title: updated.title } : c)),
+      );
+    } catch {
+      setMainError({
+        message: "Couldn't rename that conversation.",
+        retry: () => handleRenameConversation(id, title),
+      });
+    }
+  }
+
+  async function handleDeleteConversation(id) {
+    setMainError(null);
+    try {
+      await deleteConversation(id);
+      if (activeRequestRef.current?.conversationId === id) {
+        activeRequestRef.current.abort();
+        activeRequestRef.current = null;
+      }
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      setConversationState((prev) =>
+        prev.conversationId === id ? initialState : prev,
+      );
+    } catch {
+      setMainError({
+        message: "Couldn't delete that conversation.",
+        retry: () => handleDeleteConversation(id),
+      });
     }
   }
 
@@ -185,6 +224,8 @@ export default function App() {
             conversations={conversations}
             onNewConversation={handleNewConversation}
             onSelectConversation={handleSelectConversation}
+            onRenameConversation={handleRenameConversation}
+            onDeleteConversation={handleDeleteConversation}
             selectedConversationId={conversationState.conversationId}
           />
         </aside>

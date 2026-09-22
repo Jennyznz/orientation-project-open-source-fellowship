@@ -50,6 +50,39 @@ function component(view, name) {
   return view.root.find((node) => node.type?.name === name);
 }
 
+test("deleting a streaming chat cancels its request and ignores late completion", async (t) => {
+  let stream;
+  let signal;
+  const view = await mount(t, async (url, options) => {
+    if (options?.method === "DELETE") return new Response(null, { status: 204 });
+    if (url === "/api/conversations") return json({ id: "chat", title: "New" });
+    signal = options.signal;
+    return new Response(new ReadableStream({ start(controller) { stream = controller; } }));
+  });
+  let sending;
+  await act(async () => { sending = component(view, "MessageInput").props.onSend("Hello"); });
+  await act(async () => component(view, "Sidebar").props.onDeleteConversation("chat"));
+  assert.equal(signal.aborted, true);
+  await act(async () => {
+    stream.enqueue(new TextEncoder().encode('event: done\ndata: {"id":"saved","role":"assistant","content":"Late"}\n\n'));
+    await sending;
+  });
+  assert.deepEqual(component(view, "MessageList").props.messages, []);
+  assert.equal(component(view, "MessageInput").props.disabled, false);
+  assert.equal(component(view, "Sidebar").props.selectedConversationId, null);
+});
+
+test("renaming a conversation updates the sidebar", async (t) => {
+  const view = await mount(t, async (url, options) => {
+    assert.equal(url, "/api/conversations/other");
+    assert.equal(options.method, "PATCH");
+    assert.deepEqual(JSON.parse(options.body), { title: "Renamed" });
+    return json({ id: "other", title: "Renamed" });
+  });
+  await act(async () => component(view, "Sidebar").props.onRenameConversation("other", "Renamed"));
+  assert.equal(component(view, "Sidebar").props.conversations[0].title, "Renamed");
+});
+
 test("renders tokens before completion and replaces the cursor with the saved reply", async (t) => {
   let stream;
   const view = await mount(t, async (url) => {
