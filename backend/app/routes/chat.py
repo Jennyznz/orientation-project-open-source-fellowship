@@ -143,10 +143,10 @@ def send_message(
     history = [{"role": m.role, "content": m.content} for m in convo.messages]
 
     llm = get_llm_provider()
-    reply_text = llm.generate_reply(history, settings.system_prompt)
+    reply = llm.generate_reply(history, settings.system_prompt)
 
     assistant_msg = Message(
-        conversation_id=conversation_id, role="assistant", content=reply_text
+        conversation_id=conversation_id, role="assistant", content=reply.text
     )
     db.add(assistant_msg)
     db.commit()
