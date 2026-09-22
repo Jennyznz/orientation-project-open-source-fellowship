@@ -11,7 +11,7 @@ timestamps/soft-deletes, token usage tracking, etc. (see ISSUES.md).
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -49,5 +49,10 @@ class Message(Base):
     role = Column(String, nullable=False)  # "user" | "assistant"
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    # Token usage for this reply, as reported by the provider. Null on user
+    # messages, on streamed replies (issue 64), and when the provider does
+    # not report usage.
+    prompt_tokens = Column(Integer, nullable=True)
+    completion_tokens = Column(Integer, nullable=True)
 
     conversation = relationship("Conversation", back_populates="messages")

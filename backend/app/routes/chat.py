@@ -146,7 +146,11 @@ def send_message(
     reply = llm.generate_reply(history, settings.system_prompt)
 
     assistant_msg = Message(
-        conversation_id=conversation_id, role="assistant", content=reply.text
+        conversation_id=conversation_id,
+        role="assistant",
+        content=reply.text,
+        prompt_tokens=reply.prompt_tokens,
+        completion_tokens=reply.completion_tokens,
     )
     db.add(assistant_msg)
     db.commit()
