@@ -123,10 +123,16 @@ export default function App() {
       }));
     } catch (error) {
       if (!isCurrent()) return;
+      // These HTTP responses reject the request before the backend saves it.
+      // An SSE error can also report 404/429, but happens after saving the user message.
+      const rejected = [400, 401, 403, 404, 413, 422, 429].includes(error.status);
       setConversationState((prev) => ({
         ...prev,
         loading: false,
-        messages: currentConversationId
+        messages: rejected && currentConversationId
+          ? prev.messages.filter((m) => m.id !== assistantId).map((m) =>
+            m.id === userId ? { ...m, failed: true } : m)
+          : currentConversationId
           ? prev.messages.map((m) => m.id === assistantId
             ? { ...m, streaming: false, interrupted: true } : m)
           : prev.messages.filter((m) => m.id !== assistantId && m.id !== userId),
@@ -142,6 +148,7 @@ export default function App() {
   }
 
   async function handleSelectConversation(id) {
+    if (id === conversationState.conversationId && !conversationState.historyError) return;
     const controller = startRequest(id);
     setConversationState({ ...initialState, conversationId: id, loading: true });
     setMainError(null);

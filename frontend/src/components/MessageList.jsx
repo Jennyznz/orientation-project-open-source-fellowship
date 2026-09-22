@@ -8,6 +8,7 @@ export default function MessageList({ messages, loading }) {
         <div key={m.id} className="message-item">
           <strong>{m.role === "user" ? "You" : "Assistant"}:</strong>{" "}
           {m.content}
+          {m.failed && <span className="muted-text"> (Not sent)</span>}
           {m.streaming && (
             <span role="status" aria-label="Assistant is typing">
               {!m.content && <span className="thinking-text">Thinking...</span>}

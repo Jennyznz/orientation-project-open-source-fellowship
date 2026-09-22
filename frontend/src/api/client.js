@@ -19,7 +19,9 @@ function extractErrorMessage(data, status) {
 async function parseJsonResponse(res) {
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(extractErrorMessage(data, res.status));
+    const error = new Error(extractErrorMessage(data, res.status));
+    error.status = res.status;
+    throw error;
   }
   return data;
 }

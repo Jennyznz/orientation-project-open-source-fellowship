@@ -50,6 +50,57 @@ function component(view, name) {
   return view.root.find((node) => node.type?.name === name);
 }
 
+test("selecting the current chat keeps its reply streaming", async (t) => {
+  let stream;
+  let signal;
+  let historyRequests = 0;
+  const view = await mount(t, async (url, options) => {
+    if (url === "/api/conversations") return json({ id: "chat", title: "New" });
+    if (!options) {
+      historyRequests += 1;
+      return json({ id: "chat", messages: [] });
+    }
+    signal = options.signal;
+    return new Response(new ReadableStream({ start(controller) { stream = controller; } }));
+  });
+  let sending;
+  await act(async () => { sending = component(view, "MessageInput").props.onSend("Hello"); });
+  await act(async () => component(view, "Sidebar").props.onSelectConversation("chat"));
+  assert.equal(signal.aborted, false);
+  assert.equal(historyRequests, 0);
+  assert.equal(component(view, "MessageInput").props.disabled, true);
+  await act(async () => {
+    stream.enqueue(new TextEncoder().encode('event: done\ndata: {"id":"saved","role":"assistant","content":"Hello back"}\n\n'));
+    await sending;
+  });
+  assert.equal(component(view, "MessageList").props.messages.at(-1).content, "Hello back");
+});
+
+test("HTTP rejection marks the user message unsent without an interrupted reply", async (t) => {
+  const view = await mount(t, async (url) => url === "/api/conversations"
+    ? json({ id: "chat", title: "New" })
+    : new Response('{"error":{"code":422,"message":"Request validation failed"}}', { status: 422 }));
+  await act(async () => component(view, "MessageInput").props.onSend("x".repeat(10001)));
+  const messages = component(view, "MessageList").props.messages;
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].role, "user");
+  assert.equal(messages[0].failed, true);
+  assert.equal(messages[0].content.length, 10001);
+  assert.equal(component(view, "MessageInput").props.disabled, false);
+  assert.match(JSON.stringify(view.toJSON()), /Not sent/);
+  assert.doesNotMatch(JSON.stringify(view.toJSON()), /Reply interrupted/);
+});
+
+test("SSE quota errors do not mark an accepted user message unsent", async (t) => {
+  const view = await mount(t, async (url) => url === "/api/conversations"
+    ? json({ id: "chat", title: "New" })
+    : new Response('event: error\ndata: {"error":{"code":429,"message":"Quota exceeded"}}\n\n'));
+  await act(async () => component(view, "MessageInput").props.onSend("Hello"));
+  const messages = component(view, "MessageList").props.messages;
+  assert.equal(messages[0].failed, undefined);
+  assert.equal(messages[1].interrupted, true);
+});
+
 test("deleting a streaming chat cancels its request and ignores late completion", async (t) => {
   let stream;
   let signal;
