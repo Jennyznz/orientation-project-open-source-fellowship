@@ -122,6 +122,17 @@ def delete_conversation(conversation_id: str, db: Session = db_dependency):
     db.commit()
 
 
+def _generate_conversation_title(convo: Conversation, db: Session) -> None:
+    try:
+        convo.title = get_llm_provider().generate_conversation_title(
+            convo.messages[0].content
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to generate title for conversation %s", convo.id)
+
+
 @router.post(
     "/{conversation_id}/messages",
     response_model=MessageOut,
@@ -148,13 +159,7 @@ def send_message(
     reply = llm.generate_reply(history, settings.system_prompt)
 
     if convo.title == DEFAULT_TITLE:
-        try:
-            convo.title = llm.generate_conversation_title(convo.messages[0].content)
-            db.commit()
-        except Exception:
-            logger.exception(
-                "Failed to generate title for conversation %s", conversation_id
-            )
+        _generate_conversation_title(convo, db)
 
     assistant_msg = Message(
         conversation_id=conversation_id,
@@ -236,11 +241,15 @@ def stream_message(
     )
     db.add(user_msg)
     db.commit()
+
     history = [
         {"role": m.role, "content": m.content}
         for m in sorted(convo.messages, key=lambda m: m.created_at)
     ]
     bind = db.get_bind()
+
+    if convo.title == DEFAULT_TITLE:
+        _generate_conversation_title(convo, db)
 
     async def events():
         try:
