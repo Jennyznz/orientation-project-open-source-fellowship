@@ -101,6 +101,7 @@ def test_system_prompt_falls_back_to_default():
 def test_send_message_persists_user_and_assistant_messages(monkeypatch):
     provider = Mock()
     provider.generate_reply.return_value = LLMReply(text="Paris.")
+    provider.generate_conversation_title.return_value = "..."
     monkeypatch.setattr(chat, "get_llm_provider", lambda: provider)
     convo = client.post("/api/conversations", json={}).json()
 
@@ -125,6 +126,7 @@ def test_send_message_sends_prior_history_to_the_provider(monkeypatch):
         LLMReply(text="Paris."),
         LLMReply(text="About 2.1 million."),
     ]
+    provider.generate_conversation_title.return_value = "..."
     monkeypatch.setattr(chat, "get_llm_provider", lambda: provider)
     convo = client.post("/api/conversations", json={}).json()
 
