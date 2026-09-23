@@ -132,7 +132,12 @@ def _generate_conversation_title(bind, conversation_id: str) -> None:
         try:
             first_message = convo.messages[0]
             llm = get_llm_provider()
-            convo.title = llm.generate_conversation_title(first_message.content)
+            title = llm.generate_conversation_title(first_message.content)
+
+            if not convo.title_is_default:
+                return
+
+            convo.title = title
             convo.title_is_default = False
             db.commit()
         except Exception:
