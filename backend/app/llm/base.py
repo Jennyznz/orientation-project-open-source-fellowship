@@ -44,7 +44,7 @@ class LLMProvider(ABC):
         conversation.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def stream_reply(
         self, history: list[dict], system_prompt: str
