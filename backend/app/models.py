@@ -11,7 +11,16 @@ timestamps/soft-deletes, token usage tracking, etc. (see ISSUES.md).
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    event,
+)
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -41,6 +50,11 @@ class Conversation(Base):
     messages = relationship(
         "Message", back_populates="conversation", cascade="all, delete-orphan"
     )
+
+
+@event.listens_for(Conversation, "before_insert")
+def set_title_is_default(mapper, connection, target):
+    target.title_is_default = target.title == DEFAULT_TITLE
 
 
 class Message(Base):

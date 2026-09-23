@@ -46,8 +46,7 @@ logger = logging.getLogger(__name__)
     description="Creates a new, empty conversation. If no title is given, defaults to 'New Conversation'.",
 )
 def create_conversation(payload: ConversationCreate, db: Session = db_dependency):
-    title = payload.title or DEFAULT_TITLE
-    convo = Conversation(title=title, title_is_default=(title == DEFAULT_TITLE))
+    convo = Conversation(title=payload.title or DEFAULT_TITLE)
     db.add(convo)
     db.commit()
     db.refresh(convo)
