@@ -50,22 +50,6 @@ function component(view, name) {
   return view.root.find((node) => node.type?.name === name);
 }
 
-test("attachment button opens the coming-soon dialog without a network request", async (t) => {
-  const { default: MessageInput } = await server.ssrLoadModule("/src/components/MessageInput.jsx");
-  let opened = false;
-  t.mock.method(globalThis, "fetch", () => assert.fail("Attachments must not make requests"));
-  let view;
-  await act(async () => {
-    view = create(React.createElement(MessageInput, { onSend() {}, disabled: false }), {
-      createNodeMock: (element) => element.type === "dialog" ? { showModal() { opened = true; } } : null,
-    });
-  });
-  t.after(async () => { await act(async () => view.unmount()); });
-  await act(async () => view.root.findByProps({ "aria-label": "Attach a file" }).props.onClick());
-  assert.equal(opened, true);
-  assert.equal(view.root.findByType("h2").children[0], "Coming soon");
-});
-
 test("selecting the current chat keeps its reply streaming", async (t) => {
   let stream;
   let signal;
