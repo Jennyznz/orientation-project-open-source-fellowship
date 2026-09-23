@@ -11,7 +11,7 @@ timestamps/soft-deletes, token usage tracking, etc. (see ISSUES.md).
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -29,6 +29,10 @@ class Conversation(Base):
 
     id = Column(String, primary_key=True, default=_uuid)
     title = Column(String, default=DEFAULT_TITLE)
+    # True until a title is auto-generated or the user renames the
+    # conversation, whichever happens first. Addresses an edge case where a user
+    # renames a conversation to the default title.
+    title_is_default = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Cascade is enforced by the ORM, not by SQLite: deleting a Conversation

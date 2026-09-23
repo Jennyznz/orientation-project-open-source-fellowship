@@ -46,7 +46,8 @@ logger = logging.getLogger(__name__)
     description="Creates a new, empty conversation. If no title is given, defaults to 'New Conversation'.",
 )
 def create_conversation(payload: ConversationCreate, db: Session = db_dependency):
-    convo = Conversation(title=payload.title or DEFAULT_TITLE)
+    title = payload.title or DEFAULT_TITLE
+    convo = Conversation(title=title, title_is_default=(title == DEFAULT_TITLE))
     db.add(convo)
     db.commit()
     db.refresh(convo)
@@ -101,6 +102,7 @@ def rename_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     convo.title = payload.title
+    convo.title_is_default = False
     db.commit()
     db.refresh(convo)
     return convo
@@ -127,6 +129,7 @@ def _generate_conversation_title(convo: Conversation, db: Session) -> None:
         convo.title = get_llm_provider().generate_conversation_title(
             convo.messages[0].content
         )
+        convo.title_is_default = False
         db.commit()
     except Exception:
         db.rollback()
@@ -158,7 +161,7 @@ def send_message(
     llm = get_llm_provider()
     reply = llm.generate_reply(history, settings.system_prompt)
 
-    if convo.title == DEFAULT_TITLE:
+    if convo.title_is_default:
         _generate_conversation_title(convo, db)
 
     assistant_msg = Message(
@@ -248,7 +251,7 @@ def stream_message(
     ]
     bind = db.get_bind()
 
-    if convo.title == DEFAULT_TITLE:
+    if convo.title_is_default:
         _generate_conversation_title(convo, db)
 
     async def events():
