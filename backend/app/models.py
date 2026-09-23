@@ -20,13 +20,23 @@ from app.database import Base
 def _uuid() -> str:
     return str(uuid.uuid4())
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    email = Column(String, nullable=False, unique=True, index=True)
+    created_at = Column(DateTime, default=datetime.now)
+
+    conversations = relationship("Conversation", back_populates="user") # no cascade
 
 class Conversation(Base):
     __tablename__ = "conversations"
 
     id = Column(String, primary_key=True, default=_uuid)
     title = Column(String, default="New Conversation")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
+
+    user_id = Column(String, ForeignKey("users.id"), nullable=True)
 
     # Cascade is enforced by the ORM, not by SQLite: deleting a Conversation
     # through a session deletes its messages, but a bulk query.delete() or raw
