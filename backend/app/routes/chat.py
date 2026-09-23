@@ -20,7 +20,7 @@ from app.config import settings
 from app.database import get_db
 from app.errors import stream_error
 from app.llm import get_llm_provider
-from app.models import Conversation, Message
+from app.models import DEFAULT_TITLE, Conversation, Message
 from app.schemas import (
     ConversationCreate,
     ConversationDetailOut,
@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
     description="Creates a new, empty conversation. If no title is given, defaults to 'New Conversation'.",
 )
 def create_conversation(payload: ConversationCreate, db: Session = db_dependency):
-    convo = Conversation(title=payload.title or "New Conversation")
+    convo = Conversation(title=payload.title or DEFAULT_TITLE)
     db.add(convo)
     db.commit()
     db.refresh(convo)
@@ -147,10 +147,14 @@ def send_message(
     llm = get_llm_provider()
     reply = llm.generate_reply(history, settings.system_prompt)
 
-    is_first_message = len(convo.messages) == 1
-    if is_first_message:
-        convo.title = llm.generate_conversation_title(convo.messages[0].content)
-        db.commit()
+    if convo.title == DEFAULT_TITLE:
+        try:
+            convo.title = llm.generate_conversation_title(convo.messages[0].content)
+            db.commit()
+        except Exception:
+            logger.exception(
+                "Failed to generate title for conversation %s", conversation_id
+            )
 
     assistant_msg = Message(
         conversation_id=conversation_id,

@@ -21,11 +21,14 @@ def _uuid() -> str:
     return str(uuid.uuid4())
 
 
+DEFAULT_TITLE = "New Conversation"
+
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
     id = Column(String, primary_key=True, default=_uuid)
-    title = Column(String, default="New Conversation")
+    title = Column(String, default=DEFAULT_TITLE)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Cascade is enforced by the ORM, not by SQLite: deleting a Conversation
