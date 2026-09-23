@@ -47,19 +47,19 @@ export default function MessageList({ messages, loading }) {
               >
                 {m.content}
               </ReactMarkdown>
-          {m.failed && <span className="muted-text"> (Not sent)</span>}
-          {m.streaming && (
-            <span role="status" aria-label="Assistant is typing">
-              {!m.content && <span className="thinking-text">Thinking...</span>}
-              <span className="streaming-cursor" aria-hidden="true">▍</span>
-            </span>
+              {m.streaming && (
+                <span role="status" aria-label="Assistant is typing">
+                  {!m.content && <span className="thinking-text">Thinking...</span>}
+                  <span className="streaming-cursor" aria-hidden="true">▍</span>
+                </span>
+              )}
+              {m.interrupted && <span className="muted-text"> (Reply interrupted)</span>}
+            </div>
+          ) : (
+            <span>{ m.content}</span>
           )}
-          {m.interrupted && <span className="muted-text"> (Reply interrupted)</span>}
+          {m.failed && <span className="muted-text"> (Not sent)</span>}
         </div>
-      ) : (
-        <span>{ m.content}</span>
-      )}
-      </div>
       ))}
       {loading && !messages.some((m) => m.streaming) && (
         <div className="message-item muted-text" role="status">
