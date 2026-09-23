@@ -37,6 +37,7 @@ class Conversation(Base):
     created_at = Column(DateTime, default=datetime.now)
 
     user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    user = relationship("User", back_populates="conversations")
 
     # Cascade is enforced by the ORM, not by SQLite: deleting a Conversation
     # through a session deletes its messages, but a bulk query.delete() or raw
