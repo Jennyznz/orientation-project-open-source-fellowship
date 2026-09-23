@@ -77,7 +77,7 @@ class GeminiProvider(LLMProvider):
             for m in history
         ]
         stream = self.client.models.generate_content_stream(
-            model=settings.gemini_model,
+            model=model,
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
