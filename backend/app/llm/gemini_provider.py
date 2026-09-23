@@ -71,7 +71,7 @@ class GeminiProvider(LLMProvider):
                 f"Gemini returned no title text (finish_reason={finish_reason})"
             )
 
-        return response.text
+        return response.text.strip()
 
     async def stream_reply(
         self, history: list[dict], system_prompt: str
