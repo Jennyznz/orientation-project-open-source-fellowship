@@ -13,6 +13,7 @@ from contextlib import aclosing
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -26,6 +27,7 @@ from app.schemas import (
     ConversationListOut,
     ConversationOut,
     ConversationUpdate,
+    ConversationUsageOut,
     MessageCreate,
     MessageOut,
 )
@@ -143,15 +145,52 @@ def send_message(
     history = [{"role": m.role, "content": m.content} for m in convo.messages]
 
     llm = get_llm_provider()
-    reply_text = llm.generate_reply(history, settings.system_prompt)
+    reply = llm.generate_reply(history, settings.system_prompt)
 
     assistant_msg = Message(
-        conversation_id=conversation_id, role="assistant", content=reply_text
+        conversation_id=conversation_id,
+        role="assistant",
+        content=reply.text,
+        prompt_tokens=reply.prompt_tokens,
+        completion_tokens=reply.completion_tokens,
     )
     db.add(assistant_msg)
     db.commit()
     db.refresh(assistant_msg)
     return assistant_msg
+
+
+@router.get(
+    "/{conversation_id}/usage",
+    response_model=ConversationUsageOut,
+    summary="Get token usage for a conversation",
+    description="Totals the token counts recorded on this conversation's assistant messages.",
+    responses=CONVERSATION_NOT_FOUND,
+)
+def get_conversation_usage(conversation_id: str, db: Session = db_dependency):
+    if db.get(Conversation, conversation_id) is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    prompt_tokens, completion_tokens, messages_with_usage = (
+        db.query(
+            func.coalesce(func.sum(Message.prompt_tokens), 0),
+            func.coalesce(func.sum(Message.completion_tokens), 0),
+            func.count(Message.id),
+        )
+        .filter(
+            Message.conversation_id == conversation_id,
+            Message.prompt_tokens.isnot(None) | Message.completion_tokens.isnot(None),
+        )
+        .one()
+    )
+
+    return ConversationUsageOut(
+        conversation_id=conversation_id,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=prompt_tokens + completion_tokens,
+        messages_with_usage=messages_with_usage,
+    )
 
 
 def _stream_event(event: str, data: dict) -> str:
