@@ -61,9 +61,16 @@ class GeminiProvider(LLMProvider):
                     "Generate a short, plain-text title (3-6 words) summarizing "
                     "this message. No quotes, no markdown, no trailing punctuation."
                 ),
-                max_output_tokens=20,
             ),
         )
+        if not response.text:
+            finish_reason = None
+            if response.candidates:
+                finish_reason = response.candidates[0].finish_reason
+            raise ValueError(
+                f"Gemini returned no title text (finish_reason={finish_reason})"
+            )
+
         return response.text
 
     async def stream_reply(

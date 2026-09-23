@@ -6,6 +6,7 @@ message, and get an LLM reply back. Pagination, streaming, rename,
 delete, etc. are left as fellow issues -- see ISSUES.md.
 """
 
+import asyncio
 import json
 import logging
 from contextlib import aclosing
@@ -123,16 +124,22 @@ def delete_conversation(conversation_id: str, db: Session = db_dependency):
     db.commit()
 
 
-def _generate_conversation_title(convo: Conversation, db: Session) -> None:
-    try:
-        convo.title = get_llm_provider().generate_conversation_title(
-            convo.messages[0].content
-        )
-        convo.title_is_default = False
-        db.commit()
-    except Exception:
-        db.rollback()
-        logger.exception("Failed to generate title for conversation %s", convo.id)
+def _generate_conversation_title(bind, conversation_id: str) -> None:
+    with Session(bind=bind) as db:
+        convo = db.get(Conversation, conversation_id)
+        if convo is None:
+            return
+        try:
+            first_message = convo.messages[0]
+            llm = get_llm_provider()
+            convo.title = llm.generate_conversation_title(first_message.content)
+            convo.title_is_default = False
+            db.commit()
+        except Exception:
+            db.rollback()
+            logger.exception(
+                "Failed to generate title for conversation %s", conversation_id
+            )
 
 
 @router.post(
@@ -161,7 +168,7 @@ def send_message(
     reply = llm.generate_reply(history, settings.system_prompt)
 
     if convo.title_is_default:
-        _generate_conversation_title(convo, db)
+        _generate_conversation_title(db.get_bind(), conversation_id)
 
     assistant_msg = Message(
         conversation_id=conversation_id,
@@ -250,11 +257,16 @@ def stream_message(
     ]
     bind = db.get_bind()
 
-    if convo.title_is_default:
-        _generate_conversation_title(convo, db)
-
     async def events():
+        title_task = None
         try:
+            if convo.title_is_default:
+                title_task = asyncio.create_task(
+                    run_in_threadpool(
+                        _generate_conversation_title, bind, conversation_id
+                    )
+                )
+
             llm = get_llm_provider()
             chunks = []
             async with aclosing(
@@ -269,6 +281,8 @@ def stream_message(
             message = await run_in_threadpool(
                 _save_streamed_reply, bind, conversation_id, "".join(chunks)
             )
+            if title_task is not None:
+                await title_task
         except Exception as exc:
             logger.exception(
                 "Failed to stream reply for conversation %s", conversation_id
