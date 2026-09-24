@@ -73,6 +73,8 @@ class GeminiProvider(LLMProvider):
             )
 
         title = response.text.strip()[:MAX_TITLE_LENGTH]
+        if not title:
+            raise ValueError("Gemini returned a blank title after stripping")
 
         return title
 
