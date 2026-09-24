@@ -20,6 +20,7 @@ from app.database import Base
 def _uuid() -> str:
     return str(uuid.uuid4())
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -27,7 +28,8 @@ class User(Base):
     email = Column(String, nullable=False, unique=True, index=True)
     created_at = Column(DateTime, default=datetime.now)
 
-    conversations = relationship("Conversation", back_populates="user") # no cascade
+    conversations = relationship("Conversation", back_populates="user")  # no cascade
+
 
 class Conversation(Base):
     __tablename__ = "conversations"
