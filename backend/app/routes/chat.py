@@ -134,6 +134,7 @@ def _generate_conversation_title(bind, conversation_id: str) -> None:
             llm = get_llm_provider()
             title = llm.generate_conversation_title(first_message.content)
 
+            db.refresh(convo)
             if not convo.title_is_default:
                 return
 
