@@ -26,6 +26,7 @@ export default function MessageList({ messages, loading }) {
             <div className="markdown-body" style={{ marginTop: "8px" }}>
               <ReactMarkdown
                 components={{
+                  // eslint-disable-next-line no-unused-vars
                   code({ node, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || "");
                     return match ? (
