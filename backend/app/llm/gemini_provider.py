@@ -13,6 +13,7 @@ from starlette.concurrency import iterate_in_threadpool
 
 from app.config import settings
 from app.llm.base import LLMProvider, LLMReply
+from app.schemas import MAX_TITLE_LENGTH
 
 model = settings.gemini_model
 
@@ -71,7 +72,9 @@ class GeminiProvider(LLMProvider):
                 f"Gemini returned no title text (finish_reason={finish_reason})"
             )
 
-        return response.text.strip()
+        title = response.text.strip()[:MAX_TITLE_LENGTH]
+
+        return title
 
     async def stream_reply(
         self, history: list[dict], system_prompt: str
