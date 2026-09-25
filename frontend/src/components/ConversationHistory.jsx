@@ -4,6 +4,8 @@ import ConversationHistoryItem from "./ConversationHistoryItem.jsx";
 export default function ConversationHistory({
   conversations,
   onSelectConversation,
+  onRenameConversation,
+  onDeleteConversation,
   selectedConversationId,
   onLoadMore,
   canLoadMore,
@@ -24,11 +26,13 @@ export default function ConversationHistory({
             id={id}
             title={title}
             onSelectConversation={onSelectConversation}
+            onRenameConversation={onRenameConversation}
+            onDeleteConversation={onDeleteConversation}
             isSelected={id === selectedConversationId}
           />
         ))}
       </ul>
-      {loadingMore && <p className="muted-text">Loading...</p>}
+      {loadingMore && <p id="loading-conversations" className="muted-text">Loading...</p>}
       <div ref={infiniteScrollRef} className="scroll-sentinel" aria-hidden="true" />
     </div>
   );

@@ -5,6 +5,8 @@ export default function Sidebar({
   conversations,
   onSelectConversation,
   onNewConversation,
+  onRenameConversation,
+  onDeleteConversation,
   selectedConversationId,
   onLoadMore,
   canLoadMore,
@@ -16,6 +18,8 @@ export default function Sidebar({
       <ConversationHistory
         conversations={conversations}
         onSelectConversation={onSelectConversation}
+        onRenameConversation={onRenameConversation}
+        onDeleteConversation={onDeleteConversation}
         selectedConversationId={selectedConversationId}
         onLoadMore={onLoadMore}
         canLoadMore={canLoadMore}

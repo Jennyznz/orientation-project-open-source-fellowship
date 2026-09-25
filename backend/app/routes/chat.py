@@ -6,19 +6,30 @@ message, and get an LLM reply back. Pagination, streaming, rename,
 delete, etc. are left as fellow issues -- see ISSUES.md.
 """
 
+import asyncio
+import json
+import logging
+from contextlib import aclosing
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import StreamingResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
+from app.errors import stream_error
 from app.llm import get_llm_provider
-from app.models import Conversation, Message
+from app.llm.base import TokenUsage
+from app.models import DEFAULT_TITLE, Conversation, Message
 from app.schemas import (
     ConversationCreate,
     ConversationDetailOut,
     ConversationListOut,
     ConversationOut,
     ConversationUpdate,
+    ConversationUsageOut,
     MessageCreate,
     MessageOut,
 )
@@ -27,6 +38,7 @@ router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 db_dependency = Depends(get_db)
 
 CONVERSATION_NOT_FOUND = {404: {"description": "Conversation not found"}}
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -36,7 +48,7 @@ CONVERSATION_NOT_FOUND = {404: {"description": "Conversation not found"}}
     description="Creates a new, empty conversation. If no title is given, defaults to 'New Conversation'.",
 )
 def create_conversation(payload: ConversationCreate, db: Session = db_dependency):
-    convo = Conversation(title=payload.title or "New Conversation")
+    convo = Conversation(title=payload.title or DEFAULT_TITLE)
     db.add(convo)
     db.commit()
     db.refresh(convo)
@@ -91,6 +103,7 @@ def rename_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     convo.title = payload.title
+    convo.title_is_default = False
     db.commit()
     db.refresh(convo)
     return convo
@@ -110,6 +123,30 @@ def delete_conversation(conversation_id: str, db: Session = db_dependency):
 
     db.delete(convo)
     db.commit()
+
+
+def _generate_conversation_title(bind, conversation_id: str) -> None:
+    with Session(bind=bind) as db:
+        convo = db.get(Conversation, conversation_id)
+        if convo is None:
+            return
+        try:
+            first_message = convo.messages[0]
+            llm = get_llm_provider()
+            title = llm.generate_conversation_title(first_message.content)
+
+            db.refresh(convo)
+            if not convo.title_is_default:
+                return
+
+            convo.title = title
+            convo.title_is_default = False
+            db.commit()
+        except Exception:
+            db.rollback()
+            logger.exception(
+                "Failed to generate title for conversation %s", conversation_id
+            )
 
 
 @router.post(
@@ -135,12 +172,147 @@ def send_message(
     history = [{"role": m.role, "content": m.content} for m in convo.messages]
 
     llm = get_llm_provider()
-    reply_text = llm.generate_reply(history, settings.system_prompt)
+    reply = llm.generate_reply(history, settings.system_prompt)
+
+    if convo.title_is_default:
+        _generate_conversation_title(db.get_bind(), conversation_id)
 
     assistant_msg = Message(
-        conversation_id=conversation_id, role="assistant", content=reply_text
+        conversation_id=conversation_id,
+        role="assistant",
+        content=reply.text,
+        prompt_tokens=reply.prompt_tokens,
+        completion_tokens=reply.completion_tokens,
     )
     db.add(assistant_msg)
     db.commit()
     db.refresh(assistant_msg)
     return assistant_msg
+
+
+@router.get(
+    "/{conversation_id}/usage",
+    response_model=ConversationUsageOut,
+    summary="Get token usage for a conversation",
+    description="Totals the token counts recorded on this conversation's assistant messages.",
+    responses=CONVERSATION_NOT_FOUND,
+)
+def get_conversation_usage(conversation_id: str, db: Session = db_dependency):
+    if db.get(Conversation, conversation_id) is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    prompt_tokens, completion_tokens, messages_with_usage = (
+        db.query(
+            func.coalesce(func.sum(Message.prompt_tokens), 0),
+            func.coalesce(func.sum(Message.completion_tokens), 0),
+            func.count(Message.id),
+        )
+        .filter(
+            Message.conversation_id == conversation_id,
+            Message.prompt_tokens.isnot(None) | Message.completion_tokens.isnot(None),
+        )
+        .one()
+    )
+
+    return ConversationUsageOut(
+        conversation_id=conversation_id,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=prompt_tokens + completion_tokens,
+        messages_with_usage=messages_with_usage,
+    )
+
+
+def _stream_event(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+def _save_streamed_reply(
+    bind, conversation_id: str, content: str, usage: TokenUsage | None
+) -> dict:
+    with Session(bind=bind) as db:
+        if db.get(Conversation, conversation_id) is None:
+            raise ValueError("Conversation no longer exists")
+        message = Message(
+            conversation_id=conversation_id,
+            role="assistant",
+            content=content,
+            prompt_tokens=usage.prompt_tokens if usage else None,
+            completion_tokens=usage.completion_tokens if usage else None,
+        )
+        db.add(message)
+        db.commit()
+        db.refresh(message)
+        return MessageOut.model_validate(message).model_dump(mode="json")
+
+
+@router.post(
+    "/{conversation_id}/messages/stream",
+    response_class=StreamingResponse,
+    responses={200: {"content": {"text/event-stream": {}}}},
+)
+def stream_message(
+    conversation_id: str, payload: MessageCreate, db: Session = db_dependency
+):
+    convo = db.get(Conversation, conversation_id)
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    user_msg = Message(
+        conversation_id=conversation_id, role="user", content=payload.content
+    )
+    db.add(user_msg)
+    db.commit()
+
+    history = [
+        {"role": m.role, "content": m.content}
+        for m in sorted(convo.messages, key=lambda m: m.created_at)
+    ]
+    bind = db.get_bind()
+
+    async def events():
+        title_task = None
+        try:
+            if convo.title_is_default:
+                title_task = asyncio.create_task(
+                    run_in_threadpool(
+                        _generate_conversation_title, bind, conversation_id
+                    )
+                )
+
+            llm = get_llm_provider()
+            chunks = []
+            async with aclosing(
+                llm.stream_reply(history, settings.system_prompt)
+            ) as stream:
+                async for chunk in stream:
+                    if chunk:
+                        chunks.append(chunk)
+                        yield _stream_event("token", {"content": chunk})
+            if not chunks:
+                raise ValueError("The provider returned no text")
+            # The provider records usage once the stream is exhausted; a
+            # provider that reports none leaves the columns null.
+            usage = getattr(llm, "last_usage", None)
+            message = await run_in_threadpool(
+                _save_streamed_reply,
+                bind,
+                conversation_id,
+                "".join(chunks),
+                usage if isinstance(usage, TokenUsage) else None,
+            )
+            if title_task is not None:
+                await title_task
+        except Exception as exc:
+            logger.exception(
+                "Failed to stream reply for conversation %s", conversation_id
+            )
+            yield _stream_event("error", {"error": stream_error(exc)})
+            return
+        yield _stream_event("done", message)
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
