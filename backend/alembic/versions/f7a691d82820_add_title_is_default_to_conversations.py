@@ -1,7 +1,7 @@
 """add title_is_default to conversations
 
 Revision ID: f7a691d82820
-Revises: 5a294dbc5fcf
+Revises: 6ae937be5a31
 Create Date: 2026-09-23 00:00:00.000000
 
 """
@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "f7a691d82820"
-down_revision: str | None = "5a294dbc5fcf"
+down_revision: str | None = "6ae937be5a31"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
