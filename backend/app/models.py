@@ -33,6 +33,16 @@ def _uuid() -> str:
 DEFAULT_TITLE = "New Conversation"
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    email = Column(String, nullable=False, unique=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    conversations = relationship("Conversation", back_populates="user")  # no cascade
+
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
@@ -43,6 +53,9 @@ class Conversation(Base):
     # renames a conversation to the default title.
     title_is_default = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    user = relationship("User", back_populates="conversations")
 
     # Cascade is enforced by the ORM, not by SQLite: deleting a Conversation
     # through a session deletes its messages, but a bulk query.delete() or raw
