@@ -41,7 +41,7 @@ async function mount(t, request) {
     globalThis.localStorage = previousStorage;
   });
   const inputMock = { focused: false, focus() { this.focused = true; } };
-  const listMock = { scrollTop: 0, scrollHeight: 100 };
+  const listMock = { scrollTop: 0, scrollHeight: 100, clientHeight: 100 };
   let view;
   await act(async () => {
     view = create(React.createElement(App), {
