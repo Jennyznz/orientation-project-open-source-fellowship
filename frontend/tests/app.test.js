@@ -297,6 +297,17 @@ test("the input refocuses once a reply finishes and the field re-enables", async
   assert.equal(view.inputMock.focused, true);
 });
 
+test("the input does not steal focus from another editable element when a reply finishes", async (t) => {
+  const view = await mount(t, async (url) => url === "/api/conversations"
+    ? json({ id: "chat", title: "New" })
+    : new Response('event: done\ndata: {"id":"saved","role":"assistant","content":"Hello back"}\n\n'));
+  view.inputMock.focused = false;
+  globalThis.document.activeElement = { tagName: "INPUT" };
+  await act(async () => component(view, "MessageInput").props.onSend("Hello"));
+  assert.equal(component(view, "MessageInput").props.disabled, false);
+  assert.equal(view.inputMock.focused, false);
+});
+
 test("starting a new conversation focuses the input", async (t) => {
   const view = await mount(t, async (url) => url === "/api/conversations"
     ? json({ id: "chat", title: "New" })

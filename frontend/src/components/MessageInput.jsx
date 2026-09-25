@@ -5,7 +5,23 @@ export default function MessageInput({ onSend, disabled, conversationId }) {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (!disabled) inputRef.current?.focus();
+    if (disabled) {
+      return;
+    }
+
+    const active = document?.activeElement;
+    const isUserTypingElsewhere =
+      active &&
+      active !== inputRef.current &&
+      (active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        active.isContentEditable);
+
+    if (isUserTypingElsewhere) {
+      return;
+    }
+
+    inputRef.current?.focus();
   }, [disabled, conversationId]);
 
   function handleSubmit() {
@@ -26,7 +42,11 @@ export default function MessageInput({ onSend, disabled, conversationId }) {
         aria-label="Message"
         disabled={disabled}
       />
-      <button className="send-button" onClick={handleSubmit} disabled={disabled || !text.trim()}>
+      <button
+        className="send-button"
+        onClick={handleSubmit}
+        disabled={disabled || !text.trim()}
+      >
         Send
       </button>
     </div>
