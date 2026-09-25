@@ -25,8 +25,8 @@ const deferred = () => {
 
 async function mount(t, request) {
   t.mock.method(globalThis, "fetch", async (url, options) => {
-    if (url === "/api/conversations" && !options) {
-      return json({ items: [{ id: "other", title: "Other chat" }] });
+    if (url.split("?")[0] === "/api/conversations" && !options) {
+      return json({ items: [{ id: "other", title: "Other chat" }], total: 1 });
     }
     return request(url, options);
   });
