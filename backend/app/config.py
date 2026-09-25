@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     app_name: str = "MLH LLM Fellowship Project"
     database_url: str = f"sqlite:///{(BASE_DIR / 'app.db').as_posix()}"
     log_level: str = "INFO"
-    jwt_secret_key: str = "change-this-secret-key" # set default secret key
+    jwt_secret_key: str = "change-this-secret-key"  # set default secret key
 
     # LLM provider config. Fellows will extend this to support
     # multiple providers behind the abstract interface in app/llm/.
