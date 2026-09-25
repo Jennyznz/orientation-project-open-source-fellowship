@@ -170,6 +170,7 @@ def test_stream_rejects_missing_conversation_and_invalid_payload(monkeypatch):
 def test_original_message_endpoint_still_returns_json(monkeypatch):
     provider = Mock()
     provider.generate_reply.return_value = LLMReply(text="hello")
+    provider.generate_conversation_title.return_value = "..."
     monkeypatch.setattr(chat, "get_llm_provider", lambda: provider)
     convo = client.post("/api/conversations", json={}).json()
     response = client.post(
