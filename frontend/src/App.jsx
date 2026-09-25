@@ -96,9 +96,10 @@ export default function App() {
         { id: assistantId, role: "assistant", content: "", streaming: true },
       ],
     }));
+    const isNewConversation = !currentConversationId
 
     try {
-      if (!currentConversationId) {
+      if (isNewConversation) {
         const conversation = await createConversation("New Conversation");
         setConversations((prev) => [conversation, ...prev]);
         if (!isCurrent()) return;
@@ -123,6 +124,10 @@ export default function App() {
         loading: false,
         messages: prev.messages.map((m) => m.id === assistantId ? message : m),
       }));
+      
+      if (isNewConversation) {
+        fetchConversations()
+      }
     } catch (error) {
       if (!isCurrent()) return;
       // These HTTP responses reject the request before the backend saves it.
@@ -147,6 +152,7 @@ export default function App() {
     } finally {
       if (isCurrent()) activeRequestRef.current = null;
     }
+    
   }
 
   async function handleSelectConversation(id) {
