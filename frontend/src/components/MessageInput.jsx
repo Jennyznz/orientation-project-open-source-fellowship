@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export default function MessageInput({ onSend, disabled }) {
+export default function MessageInput({ onSend, disabled, conversationId }) {
   const [text, setText] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!disabled) inputRef.current?.focus();
+  }, [disabled, conversationId]);
 
   function handleSubmit() {
     if (!text.trim() || disabled) return;
@@ -12,6 +17,7 @@ export default function MessageInput({ onSend, disabled }) {
   return (
     <div className="message-input">
       <input
+        ref={inputRef}
         className="message-input-field"
         value={text}
         onChange={(e) => setText(e.target.value)}

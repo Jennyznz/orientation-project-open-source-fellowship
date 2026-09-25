@@ -253,6 +253,7 @@ export default function App() {
           <MessageInput
             onSend={handleSend}
             disabled={conversationState.loading || conversationState.historyError}
+            conversationId={conversationState.conversationId}
           />
         </main>
       </div>
