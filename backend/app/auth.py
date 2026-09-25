@@ -62,7 +62,7 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     try:
-        payload = jwt.decode(creds.credentials, settings.jwt_secret_key, algorithms=[ALGORITHM])
+        payload = jwt.decode(creds.credentials, settings.jwt_secret_key, algorithms=[SIGNING_ALGO])
         user = db.get(User, payload["sub"])
     except (jwt.PyJWTError, KeyError):
         user = None
