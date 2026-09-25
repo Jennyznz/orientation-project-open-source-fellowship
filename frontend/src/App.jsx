@@ -392,6 +392,7 @@ export default function App() {
           />
           <MessageInput
             onSend={handleSend}
+            conversationId={conversationState.conversationId}
             disabled={
               conversationState.loading || conversationState.historyError
             }
