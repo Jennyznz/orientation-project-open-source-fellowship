@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light";
 import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -19,8 +20,15 @@ function timestamp(value) {
 }
 
 export default function MessageList({ messages, loading }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages, loading]);
+
   return (
-    <div id="message-list">
+    <div id="message-list" ref={containerRef}>
       {messages.length === 0 && !loading && (
         <div className="empty-state"><span className="empty-spark" aria-hidden="true">✦</span><h2>What’s on your mind?</h2><p>Ask a question, explore an idea, or just say hello.</p></div>
       )}
